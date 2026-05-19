@@ -77,7 +77,7 @@ export default function LoginPage() {
               className="w-full px-4 py-3.5 text-center text-lg font-mono tracking-[0.3em] uppercase bg-surface border border-border/50 focus:border-primary rounded-xl text-text outline-none transition-all duration-200 placeholder:text-text-dim"
               value={code}
               onChange={e => setCode(e.target.value)}
-              maxLength={10}
+              maxLength={12}
               autoFocus
             />
             <p className="text-[10px] text-text-dim text-center mt-1.5">Enter the code your admin gave you</p>
