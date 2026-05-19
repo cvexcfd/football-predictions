@@ -1,0 +1,199 @@
+{
+  "note": "All kickoff_morocco times are in Morocco Standard Time (UTC+1). kickoff_utc is the ISO 8601 UTC timestamp for the database. Source: FIFA / Yahoo Sports official schedule.",
+  "league": {
+    "name": "FIFA World Cup 2026",
+    "season": "2026",
+    "description": "48 teams, 104 matches across USA, Canada and Mexico. June 11 – July 19, 2026."
+  },
+  "teams": [
+    { "code": "MEX", "name": "Mexico",              "group": "A", "flag_url": "https://flagcdn.com/w80/mx.png" },
+    { "code": "RSA", "name": "South Africa",         "group": "A", "flag_url": "https://flagcdn.com/w80/za.png" },
+    { "code": "KOR", "name": "South Korea",          "group": "A", "flag_url": "https://flagcdn.com/w80/kr.png" },
+    { "code": "CZE", "name": "Czechia",              "group": "A", "flag_url": "https://flagcdn.com/w80/cz.png" },
+    { "code": "CAN", "name": "Canada",               "group": "B", "flag_url": "https://flagcdn.com/w80/ca.png" },
+    { "code": "BIH", "name": "Bosnia & Herzegovina", "group": "B", "flag_url": "https://flagcdn.com/w80/ba.png" },
+    { "code": "QAT", "name": "Qatar",                "group": "B", "flag_url": "https://flagcdn.com/w80/qa.png" },
+    { "code": "SUI", "name": "Switzerland",          "group": "B", "flag_url": "https://flagcdn.com/w80/ch.png" },
+    { "code": "BRA", "name": "Brazil",               "group": "C", "flag_url": "https://flagcdn.com/w80/br.png" },
+    { "code": "MAR", "name": "Morocco",              "group": "C", "flag_url": "https://flagcdn.com/w80/ma.png" },
+    { "code": "HAI", "name": "Haiti",                "group": "C", "flag_url": "https://flagcdn.com/w80/ht.png" },
+    { "code": "SCO", "name": "Scotland",             "group": "C", "flag_url": "https://flagcdn.com/w80/gb-sct.png" },
+    { "code": "USA", "name": "USA",                  "group": "D", "flag_url": "https://flagcdn.com/w80/us.png" },
+    { "code": "PAR", "name": "Paraguay",             "group": "D", "flag_url": "https://flagcdn.com/w80/py.png" },
+    { "code": "AUS", "name": "Australia",            "group": "D", "flag_url": "https://flagcdn.com/w80/au.png" },
+    { "code": "TUR", "name": "Türkiye",              "group": "D", "flag_url": "https://flagcdn.com/w80/tr.png" },
+    { "code": "GER", "name": "Germany",              "group": "E", "flag_url": "https://flagcdn.com/w80/de.png" },
+    { "code": "CUW", "name": "Curaçao",              "group": "E", "flag_url": "https://flagcdn.com/w80/cw.png" },
+    { "code": "CIV", "name": "Ivory Coast",          "group": "E", "flag_url": "https://flagcdn.com/w80/ci.png" },
+    { "code": "ECU", "name": "Ecuador",              "group": "E", "flag_url": "https://flagcdn.com/w80/ec.png" },
+    { "code": "NED", "name": "Netherlands",          "group": "F", "flag_url": "https://flagcdn.com/w80/nl.png" },
+    { "code": "JPN", "name": "Japan",                "group": "F", "flag_url": "https://flagcdn.com/w80/jp.png" },
+    { "code": "SWE", "name": "Sweden",               "group": "F", "flag_url": "https://flagcdn.com/w80/se.png" },
+    { "code": "TUN", "name": "Tunisia",              "group": "F", "flag_url": "https://flagcdn.com/w80/tn.png" },
+    { "code": "BEL", "name": "Belgium",              "group": "G", "flag_url": "https://flagcdn.com/w80/be.png" },
+    { "code": "EGY", "name": "Egypt",                "group": "G", "flag_url": "https://flagcdn.com/w80/eg.png" },
+    { "code": "IRN", "name": "Iran",                 "group": "G", "flag_url": "https://flagcdn.com/w80/ir.png" },
+    { "code": "NZL", "name": "New Zealand",          "group": "G", "flag_url": "https://flagcdn.com/w80/nz.png" },
+    { "code": "ESP", "name": "Spain",                "group": "H", "flag_url": "https://flagcdn.com/w80/es.png" },
+    { "code": "CPV", "name": "Cape Verde",           "group": "H", "flag_url": "https://flagcdn.com/w80/cv.png" },
+    { "code": "KSA", "name": "Saudi Arabia",         "group": "H", "flag_url": "https://flagcdn.com/w80/sa.png" },
+    { "code": "URU", "name": "Uruguay",              "group": "H", "flag_url": "https://flagcdn.com/w80/uy.png" },
+    { "code": "FRA", "name": "France",               "group": "I", "flag_url": "https://flagcdn.com/w80/fr.png" },
+    { "code": "SEN", "name": "Senegal",              "group": "I", "flag_url": "https://flagcdn.com/w80/sn.png" },
+    { "code": "IRQ", "name": "Iraq",                 "group": "I", "flag_url": "https://flagcdn.com/w80/iq.png" },
+    { "code": "NOR", "name": "Norway",               "group": "I", "flag_url": "https://flagcdn.com/w80/no.png" },
+    { "code": "ARG", "name": "Argentina",            "group": "J", "flag_url": "https://flagcdn.com/w80/ar.png" },
+    { "code": "ALG", "name": "Algeria",              "group": "J", "flag_url": "https://flagcdn.com/w80/dz.png" },
+    { "code": "AUT", "name": "Austria",              "group": "J", "flag_url": "https://flagcdn.com/w80/at.png" },
+    { "code": "JOR", "name": "Jordan",               "group": "J", "flag_url": "https://flagcdn.com/w80/jo.png" },
+    { "code": "POR", "name": "Portugal",             "group": "K", "flag_url": "https://flagcdn.com/w80/pt.png" },
+    { "code": "COD", "name": "DR Congo",             "group": "K", "flag_url": "https://flagcdn.com/w80/cd.png" },
+    { "code": "UZB", "name": "Uzbekistan",           "group": "K", "flag_url": "https://flagcdn.com/w80/uz.png" },
+    { "code": "COL", "name": "Colombia",             "group": "K", "flag_url": "https://flagcdn.com/w80/co.png" },
+    { "code": "ENG", "name": "England",              "group": "L", "flag_url": "https://flagcdn.com/w80/gb-eng.png" },
+    { "code": "CRO", "name": "Croatia",              "group": "L", "flag_url": "https://flagcdn.com/w80/hr.png" },
+    { "code": "GHA", "name": "Ghana",                "group": "L", "flag_url": "https://flagcdn.com/w80/gh.png" },
+    { "code": "PAN", "name": "Panama",               "group": "L", "flag_url": "https://flagcdn.com/w80/pa.png" }
+  ],
+  "matches": [
+
+    { "match": 1,  "stage": "Group Stage", "group": "A", "home": "MEX", "away": "RSA", "venue": "Estadio Azteca, Mexico City",              "kickoff_utc": "2026-06-11T19:00:00Z", "kickoff_morocco": "2026-06-11 20:00", "is_placeholder": false },
+    { "match": 2,  "stage": "Group Stage", "group": "A", "home": "KOR", "away": "CZE", "venue": "Estadio Akron, Zapopan",                   "kickoff_utc": "2026-06-12T02:00:00Z", "kickoff_morocco": "2026-06-12 03:00", "is_placeholder": false },
+
+    { "match": 3,  "stage": "Group Stage", "group": "B", "home": "CAN", "away": "BIH", "venue": "BMO Field, Toronto",                       "kickoff_utc": "2026-06-12T19:00:00Z", "kickoff_morocco": "2026-06-12 20:00", "is_placeholder": false },
+    { "match": 4,  "stage": "Group Stage", "group": "D", "home": "USA", "away": "PAR", "venue": "SoFi Stadium, Los Angeles",                "kickoff_utc": "2026-06-13T01:00:00Z", "kickoff_morocco": "2026-06-13 02:00", "is_placeholder": false },
+
+    { "match": 5,  "stage": "Group Stage", "group": "B", "home": "QAT", "away": "SUI", "venue": "Levi's Stadium, Santa Clara",              "kickoff_utc": "2026-06-13T19:00:00Z", "kickoff_morocco": "2026-06-13 20:00", "is_placeholder": false },
+    { "match": 6,  "stage": "Group Stage", "group": "C", "home": "BRA", "away": "MAR", "venue": "MetLife Stadium, East Rutherford",         "kickoff_utc": "2026-06-13T22:00:00Z", "kickoff_morocco": "2026-06-13 23:00", "is_placeholder": false },
+    { "match": 7,  "stage": "Group Stage", "group": "C", "home": "HAI", "away": "SCO", "venue": "Gillette Stadium, Foxborough",             "kickoff_utc": "2026-06-14T01:00:00Z", "kickoff_morocco": "2026-06-14 02:00", "is_placeholder": false },
+
+    { "match": 8,  "stage": "Group Stage", "group": "D", "home": "AUS", "away": "TUR", "venue": "BC Place, Vancouver",                     "kickoff_utc": "2026-06-14T16:00:00Z", "kickoff_morocco": "2026-06-14 17:00", "is_placeholder": false },
+    { "match": 9,  "stage": "Group Stage", "group": "E", "home": "GER", "away": "CUW", "venue": "NRG Stadium, Houston",                    "kickoff_utc": "2026-06-14T17:00:00Z", "kickoff_morocco": "2026-06-14 18:00", "is_placeholder": false },
+    { "match": 10, "stage": "Group Stage", "group": "F", "home": "NED", "away": "JPN", "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-06-14T20:00:00Z", "kickoff_morocco": "2026-06-14 21:00", "is_placeholder": false },
+    { "match": 11, "stage": "Group Stage", "group": "E", "home": "CIV", "away": "ECU", "venue": "Lincoln Financial Field, Philadelphia",   "kickoff_utc": "2026-06-14T23:00:00Z", "kickoff_morocco": "2026-06-15 00:00", "is_placeholder": false },
+    { "match": 12, "stage": "Group Stage", "group": "F", "home": "SWE", "away": "TUN", "venue": "Estadio BBVA, Monterrey",                 "kickoff_utc": "2026-06-15T02:00:00Z", "kickoff_morocco": "2026-06-15 03:00", "is_placeholder": false },
+
+    { "match": 13, "stage": "Group Stage", "group": "H", "home": "ESP", "away": "CPV", "venue": "Mercedes-Benz Stadium, Atlanta",          "kickoff_utc": "2026-06-15T16:00:00Z", "kickoff_morocco": "2026-06-15 17:00", "is_placeholder": false },
+    { "match": 14, "stage": "Group Stage", "group": "G", "home": "BEL", "away": "EGY", "venue": "Lumen Field, Seattle",                   "kickoff_utc": "2026-06-15T19:00:00Z", "kickoff_morocco": "2026-06-15 20:00", "is_placeholder": false },
+    { "match": 15, "stage": "Group Stage", "group": "H", "home": "KSA", "away": "URU", "venue": "Hard Rock Stadium, Miami",               "kickoff_utc": "2026-06-15T22:00:00Z", "kickoff_morocco": "2026-06-15 23:00", "is_placeholder": false },
+    { "match": 16, "stage": "Group Stage", "group": "G", "home": "IRN", "away": "NZL", "venue": "SoFi Stadium, Los Angeles",              "kickoff_utc": "2026-06-16T01:00:00Z", "kickoff_morocco": "2026-06-16 02:00", "is_placeholder": false },
+
+    { "match": 17, "stage": "Group Stage", "group": "I", "home": "FRA", "away": "SEN", "venue": "MetLife Stadium, East Rutherford",        "kickoff_utc": "2026-06-16T19:00:00Z", "kickoff_morocco": "2026-06-16 20:00", "is_placeholder": false },
+    { "match": 18, "stage": "Group Stage", "group": "I", "home": "IRQ", "away": "NOR", "venue": "Gillette Stadium, Foxborough",            "kickoff_utc": "2026-06-16T22:00:00Z", "kickoff_morocco": "2026-06-16 23:00", "is_placeholder": false },
+    { "match": 19, "stage": "Group Stage", "group": "J", "home": "ARG", "away": "ALG", "venue": "Arrowhead Stadium, Kansas City",         "kickoff_utc": "2026-06-17T01:00:00Z", "kickoff_morocco": "2026-06-17 02:00", "is_placeholder": false },
+
+    { "match": 20, "stage": "Group Stage", "group": "J", "home": "AUT", "away": "JOR", "venue": "Levi's Stadium, Santa Clara",            "kickoff_utc": "2026-06-17T04:00:00Z", "kickoff_morocco": "2026-06-17 05:00", "is_placeholder": false },
+    { "match": 21, "stage": "Group Stage", "group": "K", "home": "POR", "away": "COD", "venue": "NRG Stadium, Houston",                   "kickoff_utc": "2026-06-17T17:00:00Z", "kickoff_morocco": "2026-06-17 18:00", "is_placeholder": false },
+    { "match": 22, "stage": "Group Stage", "group": "L", "home": "ENG", "away": "CRO", "venue": "AT&T Stadium, Arlington",                "kickoff_utc": "2026-06-17T20:00:00Z", "kickoff_morocco": "2026-06-17 21:00", "is_placeholder": false },
+    { "match": 23, "stage": "Group Stage", "group": "L", "home": "GHA", "away": "PAN", "venue": "BMO Field, Toronto",                     "kickoff_utc": "2026-06-17T23:00:00Z", "kickoff_morocco": "2026-06-18 00:00", "is_placeholder": false },
+    { "match": 24, "stage": "Group Stage", "group": "K", "home": "UZB", "away": "COL", "venue": "Estadio Azteca, Mexico City",            "kickoff_utc": "2026-06-18T02:00:00Z", "kickoff_morocco": "2026-06-18 03:00", "is_placeholder": false },
+
+    { "match": 25, "stage": "Group Stage", "group": "A", "home": "CZE", "away": "RSA", "venue": "Mercedes-Benz Stadium, Atlanta",         "kickoff_utc": "2026-06-18T16:00:00Z", "kickoff_morocco": "2026-06-18 17:00", "is_placeholder": false },
+    { "match": 26, "stage": "Group Stage", "group": "B", "home": "SUI", "away": "BIH", "venue": "SoFi Stadium, Los Angeles",              "kickoff_utc": "2026-06-18T19:00:00Z", "kickoff_morocco": "2026-06-18 20:00", "is_placeholder": false },
+    { "match": 27, "stage": "Group Stage", "group": "B", "home": "CAN", "away": "QAT", "venue": "BC Place, Vancouver",                    "kickoff_utc": "2026-06-18T22:00:00Z", "kickoff_morocco": "2026-06-18 23:00", "is_placeholder": false },
+    { "match": 28, "stage": "Group Stage", "group": "A", "home": "MEX", "away": "KOR", "venue": "Estadio Akron, Zapopan",                 "kickoff_utc": "2026-06-19T01:00:00Z", "kickoff_morocco": "2026-06-19 02:00", "is_placeholder": false },
+
+    { "match": 29, "stage": "Group Stage", "group": "D", "home": "USA", "away": "AUS", "venue": "Lumen Field, Seattle",                   "kickoff_utc": "2026-06-19T19:00:00Z", "kickoff_morocco": "2026-06-19 20:00", "is_placeholder": false },
+    { "match": 30, "stage": "Group Stage", "group": "C", "home": "SCO", "away": "MAR", "venue": "Gillette Stadium, Foxborough",           "kickoff_utc": "2026-06-19T22:00:00Z", "kickoff_morocco": "2026-06-19 23:00", "is_placeholder": false },
+    { "match": 31, "stage": "Group Stage", "group": "C", "home": "BRA", "away": "HAI", "venue": "Lincoln Financial Field, Philadelphia", "kickoff_utc": "2026-06-20T00:30:00Z", "kickoff_morocco": "2026-06-20 01:30", "is_placeholder": false },
+    { "match": 32, "stage": "Group Stage", "group": "D", "home": "TUR", "away": "PAR", "venue": "Levi's Stadium, Santa Clara",            "kickoff_utc": "2026-06-20T03:00:00Z", "kickoff_morocco": "2026-06-20 04:00", "is_placeholder": false },
+
+    { "match": 33, "stage": "Group Stage", "group": "F", "home": "NED", "away": "SWE", "venue": "NRG Stadium, Houston",                   "kickoff_utc": "2026-06-20T17:00:00Z", "kickoff_morocco": "2026-06-20 18:00", "is_placeholder": false },
+    { "match": 34, "stage": "Group Stage", "group": "E", "home": "GER", "away": "CIV", "venue": "BMO Field, Toronto",                     "kickoff_utc": "2026-06-20T20:00:00Z", "kickoff_morocco": "2026-06-20 21:00", "is_placeholder": false },
+    { "match": 35, "stage": "Group Stage", "group": "E", "home": "ECU", "away": "CUW", "venue": "Arrowhead Stadium, Kansas City",         "kickoff_utc": "2026-06-21T00:00:00Z", "kickoff_morocco": "2026-06-21 01:00", "is_placeholder": false },
+
+    { "match": 36, "stage": "Group Stage", "group": "F", "home": "TUN", "away": "JPN", "venue": "Estadio BBVA, Monterrey",                "kickoff_utc": "2026-06-21T04:00:00Z", "kickoff_morocco": "2026-06-21 05:00", "is_placeholder": false },
+    { "match": 37, "stage": "Group Stage", "group": "H", "home": "ESP", "away": "KSA", "venue": "Mercedes-Benz Stadium, Atlanta",         "kickoff_utc": "2026-06-21T16:00:00Z", "kickoff_morocco": "2026-06-21 17:00", "is_placeholder": false },
+    { "match": 38, "stage": "Group Stage", "group": "G", "home": "BEL", "away": "IRN", "venue": "SoFi Stadium, Los Angeles",              "kickoff_utc": "2026-06-21T19:00:00Z", "kickoff_morocco": "2026-06-21 20:00", "is_placeholder": false },
+    { "match": 39, "stage": "Group Stage", "group": "H", "home": "URU", "away": "CPV", "venue": "Hard Rock Stadium, Miami",               "kickoff_utc": "2026-06-21T22:00:00Z", "kickoff_morocco": "2026-06-21 23:00", "is_placeholder": false },
+    { "match": 40, "stage": "Group Stage", "group": "G", "home": "NZL", "away": "EGY", "venue": "BC Place, Vancouver",                    "kickoff_utc": "2026-06-22T01:00:00Z", "kickoff_morocco": "2026-06-22 02:00", "is_placeholder": false },
+
+    { "match": 41, "stage": "Group Stage", "group": "J", "home": "ARG", "away": "AUT", "venue": "AT&T Stadium, Arlington",                "kickoff_utc": "2026-06-22T17:00:00Z", "kickoff_morocco": "2026-06-22 18:00", "is_placeholder": false },
+    { "match": 42, "stage": "Group Stage", "group": "I", "home": "FRA", "away": "IRQ", "venue": "Lincoln Financial Field, Philadelphia", "kickoff_utc": "2026-06-22T21:00:00Z", "kickoff_morocco": "2026-06-22 22:00", "is_placeholder": false },
+    { "match": 43, "stage": "Group Stage", "group": "I", "home": "NOR", "away": "SEN", "venue": "MetLife Stadium, East Rutherford",       "kickoff_utc": "2026-06-23T00:00:00Z", "kickoff_morocco": "2026-06-23 01:00", "is_placeholder": false },
+    { "match": 44, "stage": "Group Stage", "group": "J", "home": "JOR", "away": "ALG", "venue": "Levi's Stadium, Santa Clara",            "kickoff_utc": "2026-06-23T03:00:00Z", "kickoff_morocco": "2026-06-23 04:00", "is_placeholder": false },
+
+    { "match": 45, "stage": "Group Stage", "group": "K", "home": "POR", "away": "UZB", "venue": "NRG Stadium, Houston",                   "kickoff_utc": "2026-06-23T17:00:00Z", "kickoff_morocco": "2026-06-23 18:00", "is_placeholder": false },
+    { "match": 46, "stage": "Group Stage", "group": "L", "home": "ENG", "away": "GHA", "venue": "Gillette Stadium, Foxborough",           "kickoff_utc": "2026-06-23T20:00:00Z", "kickoff_morocco": "2026-06-23 21:00", "is_placeholder": false },
+    { "match": 47, "stage": "Group Stage", "group": "L", "home": "PAN", "away": "CRO", "venue": "BMO Field, Toronto",                     "kickoff_utc": "2026-06-23T23:00:00Z", "kickoff_morocco": "2026-06-24 00:00", "is_placeholder": false },
+    { "match": 48, "stage": "Group Stage", "group": "K", "home": "COL", "away": "COD", "venue": "Estadio Akron, Zapopan",                 "kickoff_utc": "2026-06-24T02:00:00Z", "kickoff_morocco": "2026-06-24 03:00", "is_placeholder": false },
+
+    { "match": 49, "stage": "Group Stage", "group": "B", "home": "SUI", "away": "CAN", "venue": "BC Place, Vancouver",                    "kickoff_utc": "2026-06-24T19:00:00Z", "kickoff_morocco": "2026-06-24 20:00", "is_placeholder": false },
+    { "match": 50, "stage": "Group Stage", "group": "B", "home": "BIH", "away": "QAT", "venue": "Lumen Field, Seattle",                   "kickoff_utc": "2026-06-24T19:00:00Z", "kickoff_morocco": "2026-06-24 20:00", "is_placeholder": false },
+    { "match": 51, "stage": "Group Stage", "group": "C", "home": "SCO", "away": "BRA", "venue": "Hard Rock Stadium, Miami",               "kickoff_utc": "2026-06-24T22:00:00Z", "kickoff_morocco": "2026-06-24 23:00", "is_placeholder": false },
+    { "match": 52, "stage": "Group Stage", "group": "C", "home": "MAR", "away": "HAI", "venue": "Mercedes-Benz Stadium, Atlanta",         "kickoff_utc": "2026-06-24T22:00:00Z", "kickoff_morocco": "2026-06-24 23:00", "is_placeholder": false },
+    { "match": 53, "stage": "Group Stage", "group": "A", "home": "CZE", "away": "MEX", "venue": "Estadio Azteca, Mexico City",            "kickoff_utc": "2026-06-25T01:00:00Z", "kickoff_morocco": "2026-06-25 02:00", "is_placeholder": false },
+    { "match": 54, "stage": "Group Stage", "group": "A", "home": "RSA", "away": "KOR", "venue": "Estadio BBVA, Monterrey",                "kickoff_utc": "2026-06-25T01:00:00Z", "kickoff_morocco": "2026-06-25 02:00", "is_placeholder": false },
+
+    { "match": 55, "stage": "Group Stage", "group": "E", "home": "CUW", "away": "CIV", "venue": "Lincoln Financial Field, Philadelphia", "kickoff_utc": "2026-06-25T20:00:00Z", "kickoff_morocco": "2026-06-25 21:00", "is_placeholder": false },
+    { "match": 56, "stage": "Group Stage", "group": "E", "home": "ECU", "away": "GER", "venue": "MetLife Stadium, East Rutherford",       "kickoff_utc": "2026-06-25T20:00:00Z", "kickoff_morocco": "2026-06-25 21:00", "is_placeholder": false },
+    { "match": 57, "stage": "Group Stage", "group": "F", "home": "JPN", "away": "SWE", "venue": "AT&T Stadium, Arlington",                "kickoff_utc": "2026-06-25T23:00:00Z", "kickoff_morocco": "2026-06-26 00:00", "is_placeholder": false },
+    { "match": 58, "stage": "Group Stage", "group": "F", "home": "TUN", "away": "NED", "venue": "Arrowhead Stadium, Kansas City",         "kickoff_utc": "2026-06-25T23:00:00Z", "kickoff_morocco": "2026-06-26 00:00", "is_placeholder": false },
+    { "match": 59, "stage": "Group Stage", "group": "D", "home": "TUR", "away": "USA", "venue": "SoFi Stadium, Los Angeles",              "kickoff_utc": "2026-06-26T02:00:00Z", "kickoff_morocco": "2026-06-26 03:00", "is_placeholder": false },
+    { "match": 60, "stage": "Group Stage", "group": "D", "home": "PAR", "away": "AUS", "venue": "Levi's Stadium, Santa Clara",            "kickoff_utc": "2026-06-26T02:00:00Z", "kickoff_morocco": "2026-06-26 03:00", "is_placeholder": false },
+
+    { "match": 61, "stage": "Group Stage", "group": "I", "home": "NOR", "away": "FRA", "venue": "Gillette Stadium, Foxborough",           "kickoff_utc": "2026-06-26T19:00:00Z", "kickoff_morocco": "2026-06-26 20:00", "is_placeholder": false },
+    { "match": 62, "stage": "Group Stage", "group": "I", "home": "SEN", "away": "IRQ", "venue": "BMO Field, Toronto",                     "kickoff_utc": "2026-06-26T19:00:00Z", "kickoff_morocco": "2026-06-26 20:00", "is_placeholder": false },
+    { "match": 63, "stage": "Group Stage", "group": "H", "home": "CPV", "away": "KSA", "venue": "NRG Stadium, Houston",                   "kickoff_utc": "2026-06-27T00:00:00Z", "kickoff_morocco": "2026-06-27 01:00", "is_placeholder": false },
+    { "match": 64, "stage": "Group Stage", "group": "H", "home": "URU", "away": "ESP", "venue": "Estadio Akron, Zapopan",                 "kickoff_utc": "2026-06-27T00:00:00Z", "kickoff_morocco": "2026-06-27 01:00", "is_placeholder": false },
+    { "match": 65, "stage": "Group Stage", "group": "G", "home": "EGY", "away": "IRN", "venue": "Lumen Field, Seattle",                   "kickoff_utc": "2026-06-27T03:00:00Z", "kickoff_morocco": "2026-06-27 04:00", "is_placeholder": false },
+    { "match": 66, "stage": "Group Stage", "group": "G", "home": "NZL", "away": "BEL", "venue": "BC Place, Vancouver",                    "kickoff_utc": "2026-06-27T03:00:00Z", "kickoff_morocco": "2026-06-27 04:00", "is_placeholder": false },
+
+    { "match": 67, "stage": "Group Stage", "group": "L", "home": "PAN", "away": "ENG", "venue": "MetLife Stadium, East Rutherford",       "kickoff_utc": "2026-06-27T21:00:00Z", "kickoff_morocco": "2026-06-27 22:00", "is_placeholder": false },
+    { "match": 68, "stage": "Group Stage", "group": "L", "home": "CRO", "away": "GHA", "venue": "Lincoln Financial Field, Philadelphia", "kickoff_utc": "2026-06-27T21:00:00Z", "kickoff_morocco": "2026-06-27 22:00", "is_placeholder": false },
+    { "match": 69, "stage": "Group Stage", "group": "K", "home": "COL", "away": "POR", "venue": "Hard Rock Stadium, Miami",               "kickoff_utc": "2026-06-27T23:30:00Z", "kickoff_morocco": "2026-06-28 00:30", "is_placeholder": false },
+    { "match": 70, "stage": "Group Stage", "group": "K", "home": "COD", "away": "UZB", "venue": "Mercedes-Benz Stadium, Atlanta",         "kickoff_utc": "2026-06-27T23:30:00Z", "kickoff_morocco": "2026-06-28 00:30", "is_placeholder": false },
+    { "match": 71, "stage": "Group Stage", "group": "J", "home": "ALG", "away": "AUT", "venue": "Arrowhead Stadium, Kansas City",         "kickoff_utc": "2026-06-28T02:00:00Z", "kickoff_morocco": "2026-06-28 03:00", "is_placeholder": false },
+    { "match": 72, "stage": "Group Stage", "group": "J", "home": "JOR", "away": "ARG", "venue": "AT&T Stadium, Arlington",                "kickoff_utc": "2026-06-28T02:00:00Z", "kickoff_morocco": "2026-06-28 03:00", "is_placeholder": false },
+
+    { "match": 73, "stage": "Round of 32", "group": null, "home": "Runner-up Group A", "away": "Runner-up Group B", "venue": "SoFi Stadium, Los Angeles",              "kickoff_utc": "2026-06-28T19:00:00Z", "kickoff_morocco": "2026-06-28 20:00", "is_placeholder": true },
+
+    { "match": 74, "stage": "Round of 32", "group": null, "home": "Winner Group C",   "away": "Runner-up Group F",  "venue": "NRG Stadium, Houston",                   "kickoff_utc": "2026-06-29T17:00:00Z", "kickoff_morocco": "2026-06-29 18:00", "is_placeholder": true },
+    { "match": 75, "stage": "Round of 32", "group": null, "home": "Winner Group E",   "away": "Best 3rd (A/B/C/D/F)","venue": "Gillette Stadium, Foxborough",           "kickoff_utc": "2026-06-29T20:30:00Z", "kickoff_morocco": "2026-06-29 21:30", "is_placeholder": true },
+    { "match": 76, "stage": "Round of 32", "group": null, "home": "Winner Group F",   "away": "Runner-up Group C",  "venue": "Estadio BBVA, Monterrey",                 "kickoff_utc": "2026-06-30T01:00:00Z", "kickoff_morocco": "2026-06-30 02:00", "is_placeholder": true },
+
+    { "match": 77, "stage": "Round of 32", "group": null, "home": "Runner-up Group E","away": "Runner-up Group I",  "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-06-30T17:00:00Z", "kickoff_morocco": "2026-06-30 18:00", "is_placeholder": true },
+    { "match": 78, "stage": "Round of 32", "group": null, "home": "Winner Group I",   "away": "Best 3rd (C/D/F/G/H)","venue": "MetLife Stadium, East Rutherford",       "kickoff_utc": "2026-06-30T21:00:00Z", "kickoff_morocco": "2026-06-30 22:00", "is_placeholder": true },
+    { "match": 79, "stage": "Round of 32", "group": null, "home": "Winner Group A",   "away": "Best 3rd (C/E/F/H/I)","venue": "Estadio Azteca, Mexico City",            "kickoff_utc": "2026-07-01T01:00:00Z", "kickoff_morocco": "2026-07-01 02:00", "is_placeholder": true },
+
+    { "match": 80, "stage": "Round of 32", "group": null, "home": "Winner Group L",   "away": "Best 3rd (E/H/I/J/K)","venue": "Mercedes-Benz Stadium, Atlanta",         "kickoff_utc": "2026-07-01T16:00:00Z", "kickoff_morocco": "2026-07-01 17:00", "is_placeholder": true },
+    { "match": 81, "stage": "Round of 32", "group": null, "home": "Winner Group G",   "away": "Best 3rd (A/E/H/I/J)","venue": "Lumen Field, Seattle",                  "kickoff_utc": "2026-07-01T20:00:00Z", "kickoff_morocco": "2026-07-01 21:00", "is_placeholder": true },
+    { "match": 82, "stage": "Round of 32", "group": null, "home": "Winner Group D",   "away": "Best 3rd (B/E/F/I/J)","venue": "Levi's Stadium, Santa Clara",           "kickoff_utc": "2026-07-02T00:00:00Z", "kickoff_morocco": "2026-07-02 01:00", "is_placeholder": true },
+
+    { "match": 83, "stage": "Round of 32", "group": null, "home": "Winner Group H",   "away": "Runner-up Group J",  "venue": "SoFi Stadium, Los Angeles",               "kickoff_utc": "2026-07-02T19:00:00Z", "kickoff_morocco": "2026-07-02 20:00", "is_placeholder": true },
+    { "match": 84, "stage": "Round of 32", "group": null, "home": "Runner-up Group K","away": "Runner-up Group L",  "venue": "BMO Field, Toronto",                      "kickoff_utc": "2026-07-02T23:00:00Z", "kickoff_morocco": "2026-07-03 00:00", "is_placeholder": true },
+    { "match": 85, "stage": "Round of 32", "group": null, "home": "Winner Group B",   "away": "Best 3rd (E/F/G/I/J)","venue": "BC Place, Vancouver",                   "kickoff_utc": "2026-07-03T03:00:00Z", "kickoff_morocco": "2026-07-03 04:00", "is_placeholder": true },
+
+    { "match": 86, "stage": "Round of 32", "group": null, "home": "Runner-up Group D","away": "Runner-up Group G",  "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-07-03T18:00:00Z", "kickoff_morocco": "2026-07-03 19:00", "is_placeholder": true },
+    { "match": 87, "stage": "Round of 32", "group": null, "home": "Winner Group J",   "away": "Runner-up Group H",  "venue": "Hard Rock Stadium, Miami",                "kickoff_utc": "2026-07-03T22:00:00Z", "kickoff_morocco": "2026-07-03 23:00", "is_placeholder": true },
+    { "match": 88, "stage": "Round of 32", "group": null, "home": "Winner Group K",   "away": "Best 3rd (D/E/I/J/L)","venue": "Arrowhead Stadium, Kansas City",         "kickoff_utc": "2026-07-04T01:30:00Z", "kickoff_morocco": "2026-07-04 02:30", "is_placeholder": true },
+
+    { "match": 89, "stage": "Round of 16", "group": null, "home": "Winner M73",       "away": "Winner M74",         "venue": "NRG Stadium, Houston",                    "kickoff_utc": "2026-07-04T17:00:00Z", "kickoff_morocco": "2026-07-04 18:00", "is_placeholder": true },
+    { "match": 90, "stage": "Round of 16", "group": null, "home": "Winner M75",       "away": "Winner M76",         "venue": "Lincoln Financial Field, Philadelphia",  "kickoff_utc": "2026-07-04T21:00:00Z", "kickoff_morocco": "2026-07-04 22:00", "is_placeholder": true },
+
+    { "match": 91, "stage": "Round of 16", "group": null, "home": "Winner M77",       "away": "Winner M78",         "venue": "MetLife Stadium, East Rutherford",        "kickoff_utc": "2026-07-05T20:00:00Z", "kickoff_morocco": "2026-07-05 21:00", "is_placeholder": true },
+    { "match": 92, "stage": "Round of 16", "group": null, "home": "Winner M79",       "away": "Winner M80",         "venue": "Estadio Azteca, Mexico City",             "kickoff_utc": "2026-07-06T00:00:00Z", "kickoff_morocco": "2026-07-06 01:00", "is_placeholder": true },
+
+    { "match": 93, "stage": "Round of 16", "group": null, "home": "Winner M81",       "away": "Winner M82",         "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-07-06T19:00:00Z", "kickoff_morocco": "2026-07-06 20:00", "is_placeholder": true },
+    { "match": 94, "stage": "Round of 16", "group": null, "home": "Winner M83",       "away": "Winner M84",         "venue": "Lumen Field, Seattle",                   "kickoff_utc": "2026-07-07T00:00:00Z", "kickoff_morocco": "2026-07-07 01:00", "is_placeholder": true },
+
+    { "match": 95, "stage": "Round of 16", "group": null, "home": "Winner M85",       "away": "Winner M86",         "venue": "Mercedes-Benz Stadium, Atlanta",          "kickoff_utc": "2026-07-07T16:00:00Z", "kickoff_morocco": "2026-07-07 17:00", "is_placeholder": true },
+    { "match": 96, "stage": "Round of 16", "group": null, "home": "Winner M87",       "away": "Winner M88",         "venue": "BC Place, Vancouver",                    "kickoff_utc": "2026-07-07T20:00:00Z", "kickoff_morocco": "2026-07-07 21:00", "is_placeholder": true },
+
+    { "match": 97, "stage": "Quarter-Final", "group": null, "home": "Winner M89",     "away": "Winner M90",         "venue": "Gillette Stadium, Foxborough",            "kickoff_utc": "2026-07-09T20:00:00Z", "kickoff_morocco": "2026-07-09 21:00", "is_placeholder": true },
+
+    { "match": 98, "stage": "Quarter-Final", "group": null, "home": "Winner M91",     "away": "Winner M92",         "venue": "SoFi Stadium, Los Angeles",               "kickoff_utc": "2026-07-10T19:00:00Z", "kickoff_morocco": "2026-07-10 20:00", "is_placeholder": true },
+
+    { "match": 99, "stage": "Quarter-Final", "group": null, "home": "Winner M93",     "away": "Winner M94",         "venue": "Hard Rock Stadium, Miami",                "kickoff_utc": "2026-07-11T21:00:00Z", "kickoff_morocco": "2026-07-11 22:00", "is_placeholder": true },
+    { "match": 100,"stage": "Quarter-Final", "group": null, "home": "Winner M95",     "away": "Winner M96",         "venue": "Arrowhead Stadium, Kansas City",          "kickoff_utc": "2026-07-12T01:00:00Z", "kickoff_morocco": "2026-07-12 02:00", "is_placeholder": true },
+
+    { "match": 101,"stage": "Semi-Final",   "group": null, "home": "Winner M97",      "away": "Winner M98",         "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-07-14T19:00:00Z", "kickoff_morocco": "2026-07-14 20:00", "is_placeholder": true },
+
+    { "match": 102,"stage": "Semi-Final",   "group": null, "home": "Winner M99",      "away": "Winner M100",        "venue": "Mercedes-Benz Stadium, Atlanta",          "kickoff_utc": "2026-07-15T19:00:00Z", "kickoff_morocco": "2026-07-15 20:00", "is_placeholder": true },
+
+    { "match": 103,"stage": "Third Place",  "group": null, "home": "Loser M101",      "away": "Loser M102",         "venue": "Hard Rock Stadium, Miami",                "kickoff_utc": "2026-07-18T21:00:00Z", "kickoff_morocco": "2026-07-18 22:00", "is_placeholder": true },
+
+    { "match": 104,"stage": "Final",        "group": null, "home": "Winner M101",     "away": "Winner M102",        "venue": "MetLife Stadium, East Rutherford",        "kickoff_utc": "2026-07-19T19:00:00Z", "kickoff_morocco": "2026-07-19 20:00", "is_placeholder": true }
+
+  ]
+}

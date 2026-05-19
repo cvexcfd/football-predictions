@@ -1,10 +1,102 @@
+import { useQuery } from '@tanstack/react-query'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { supabase } from '../lib/supabase'
 import { LoadingSpinner } from '../components/ui'
+
+interface LiveMatch {
+  id: string
+  kickoff_at: string
+  stage: string | null
+  home_team: { name: string; flag_url: string | null; code: string | null } | null
+  away_team: { name: string; flag_url: string | null; code: string | null } | null
+  predictions: Array<{
+    player_id: string
+    pred_home: number
+    pred_away: number
+    player: { name: string } | null
+    badge: { name: string; type: string; factor: number } | null
+  }>
+}
 
 export default function LeaderboardPage() {
   const { data: leaderboard, isLoading } = useLeaderboard()
 
+  const { data: liveMatches } = useQuery({
+    queryKey: ['live-matches'],
+    queryFn: async () => {
+      const cutoff = new Date(Date.now() - 130 * 60 * 1000).toISOString()
+
+      const { data: rawMatches } = await supabase
+        .from('matches')
+        .select(`
+          id, kickoff_at, stage,
+          home_team:home_team_id(name, flag_url, code),
+          away_team:away_team_id(name, flag_url, code)
+        `)
+        .eq('status', 'locked')
+        .gte('kickoff_at', cutoff)
+        .order('kickoff_at', { ascending: true })
+
+      if (!rawMatches || rawMatches.length === 0) return []
+
+      const matches = rawMatches.map((m: Record<string, unknown>) => ({
+        id: m.id as string,
+        kickoff_at: m.kickoff_at as string,
+        stage: m.stage as string | null,
+        home_team: Array.isArray(m.home_team) ? (m.home_team as Array<Record<string, unknown>>)[0] ?? null : m.home_team as Record<string, unknown> | null,
+        away_team: Array.isArray(m.away_team) ? (m.away_team as Array<Record<string, unknown>>)[0] ?? null : m.away_team as Record<string, unknown> | null,
+      }))
+
+      const matchIds = matches.map(m => m.id)
+
+      const { data: rawPreds } = await supabase
+        .from('predictions')
+        .select(`
+          match_id, player_id, pred_home, pred_away, badge_id_used,
+          player:player_id(name),
+          badge:badge_id_used(name, type, factor)
+        `)
+        .in('match_id', matchIds)
+
+      const predByMatch = new Map<string, Array<{
+        player_id: string
+        pred_home: number
+        pred_away: number
+        player: { name: string } | null
+        badge: { name: string; type: string; factor: number } | null
+      }>>()
+      for (const p of rawPreds ?? []) {
+        const pp = p as unknown as {
+          match_id: string
+          player_id: string
+          pred_home: number
+          pred_away: number
+          player: Array<{ name: string }> | { name: string } | null
+          badge: Array<{ name: string; type: string; factor: number }> | { name: string; type: string; factor: number } | null
+        }
+        const entry = {
+          player_id: pp.player_id,
+          pred_home: pp.pred_home,
+          pred_away: pp.pred_away,
+          player: Array.isArray(pp.player) ? pp.player[0] ?? null : (pp.player as { name: string } | null),
+          badge: Array.isArray(pp.badge) ? pp.badge[0] ?? null : (pp.badge as { name: string; type: string; factor: number } | null),
+        }
+        const arr = predByMatch.get(pp.match_id) ?? []
+        arr.push(entry)
+        predByMatch.set(pp.match_id, arr)
+      }
+
+      return (matches ?? []).map(m => ({
+        ...m,
+        predictions: predByMatch.get(m.id) ?? [],
+      })) as LiveMatch[]
+    },
+    refetchInterval: 30_000,
+  })
+
   if (isLoading) return <LoadingSpinner />
+
+  const hasLive = liveMatches && liveMatches.length > 0
 
   return (
     <div className="pb-20 max-w-3xl mx-auto">
@@ -17,6 +109,67 @@ export default function LeaderboardPage() {
       </div>
 
       <div className="px-4">
+        {hasLive && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              Live Matches
+            </h2>
+            <div className="space-y-3">
+              {liveMatches!.map(m => (
+                <div key={m.id} className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden animate-fade-in">
+                  <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50 border-b border-border/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-white/80 px-2 py-0.5 rounded-full">{m.stage}</span>
+                      <span className="text-[10px] text-red-600 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        LIVE
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-text-muted">
+                      {new Date(m.kickoff_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <div className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {m.home_team?.flag_url && <img src={m.home_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
+                        <span className="font-semibold text-sm truncate">{m.home_team?.name}</span>
+                      </div>
+                      <span className="font-bold text-sm text-text-muted shrink-0 mx-2">vs</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-semibold text-sm truncate">{m.away_team?.name}</span>
+                        {m.away_team?.flag_url && <img src={m.away_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      {m.predictions.length === 0 ? (
+                        <div className="text-xs text-text-muted text-center py-2">No predictions yet</div>
+                      ) : (
+                        m.predictions.map(p => (
+                          <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            <span className="font-medium">{p.player?.name ?? '?'}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-primary">{p.pred_home}-{p.pred_away}</span>
+                              {p.badge && (
+                                <span className="text-[10px] text-text-muted bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                  {p.badge.name} ({p.badge.type === 'multiplier' ? '×' : '+'}{p.badge.factor})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {(!leaderboard || leaderboard.length === 0) ? (
           <div className="text-center py-12 text-text-muted">No players yet</div>
         ) : (
@@ -28,7 +181,6 @@ export default function LeaderboardPage() {
                   <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">Player</th>
                   <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs">Points</th>
                   <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs hidden sm:table-cell">Badges</th>
-                  <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs hidden sm:table-cell">Preds</th>
                 </tr>
               </thead>
               <tbody>
@@ -48,7 +200,6 @@ export default function LeaderboardPage() {
                     <td className="px-4 py-3.5 font-semibold">{entry.name}</td>
                     <td className="px-4 py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
                     <td className="px-4 py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>
-                    <td className="px-4 py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.predictions_count}</td>
                   </tr>
                 ))}
               </tbody>
