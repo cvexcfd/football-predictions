@@ -1,8 +1,11 @@
+import { useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { LeaderboardEntry } from '../types'
 
 export function useLeaderboard() {
+  const prevRanksRef = useRef<Map<string, number>>(new Map())
+
   return useQuery({
     queryKey: ['leaderboard'],
     queryFn: async () => {
@@ -61,6 +64,14 @@ export function useLeaderboard() {
         }
         return 0
       })
+
+      const prevRanks = prevRanksRef.current
+      const currentRanks = new Map(leaderboard.map((e, i) => [e.id, i + 1]))
+      for (const entry of leaderboard) {
+        const prevRank = prevRanks.get(entry.id)
+        entry.rankDelta = prevRank ? prevRank - (currentRanks.get(entry.id) ?? 0) : 0
+      }
+      prevRanksRef.current = currentRanks
 
       return leaderboard
     },

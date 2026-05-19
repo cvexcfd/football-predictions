@@ -117,6 +117,24 @@ export interface LeaderboardEntry {
   first_prediction_at: string | null
   badge_count: number
   predictions_count: number
+  rankDelta?: number
+}
+
+export interface MatchHistoryEntry {
+  id: string
+  kickoff_at: string
+  stage: string | null
+  home_score: number | null
+  away_score: number | null
+  home_team: { name: string; code: string | null; flag_url: string | null } | null
+  away_team: { name: string; code: string | null; flag_url: string | null } | null
+  predictions: Array<{
+    player_id: string
+    player_name: string
+    pred_home: number
+    pred_away: number
+    pts_total: number
+  }>
 }
 
 export interface MatchWithPrediction extends Match {

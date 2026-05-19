@@ -100,7 +100,16 @@ export default function AdminMatchesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
   })
 
+  const deleteMatch = useMutation({
+    mutationFn: async (matchId: string) => {
+      await supabase.from('predictions').delete().eq('match_id', matchId)
+      await supabase.from('matches').delete().eq('id', matchId)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+  })
+
   const [resultInputs, setResultInputs] = useState<Record<string, { h: string; a: string }>>({})
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   if (isLoading) return <LoadingSpinner />
 
@@ -187,16 +196,32 @@ export default function AdminMatchesPage() {
         </div>
       )}
 
+      {confirmDelete && (
+        <div className="bg-danger/10 border border-danger/30 rounded-2xl p-5 mb-4 animate-fade-in">
+          <div className="font-semibold text-danger mb-1">Delete Match?</div>
+          <div className="text-sm text-text-muted mb-3">This will also delete all predictions for this match. Cannot be undone.</div>
+          <div className="flex gap-2">
+            <Button variant="danger" size="sm" onClick={() => { deleteMatch.mutate(confirmDelete); setConfirmDelete(null) }} disabled={deleteMatch.isPending}>
+              {deleteMatch.isPending ? 'Deleting...' : 'Confirm Delete'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         {matches?.map(m => (
           <div key={m.id} className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-text-muted">{m.league?.name} — {m.stage}</span>
-              <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-medium ${
-                m.status === 'upcoming' ? 'bg-primary/10 text-primary border border-primary/20' :
-                m.status === 'locked' ? 'bg-warning/10 text-warning border border-warning/20' :
-                'bg-success/10 text-success border border-success/20'
-              }`}>{m.status}</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-medium ${
+                  m.status === 'upcoming' ? 'bg-primary/10 text-primary border border-primary/20' :
+                  m.status === 'locked' ? 'bg-warning/10 text-warning border border-warning/20' :
+                  'bg-success/10 text-success border border-success/20'
+                }`}>{m.status}</span>
+                <button className="text-xs text-danger hover:text-red-400" onClick={() => setConfirmDelete(m.id)} title="Delete match">🗑️</button>
+              </div>
             </div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0">
