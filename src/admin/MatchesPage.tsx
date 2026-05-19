@@ -49,6 +49,8 @@ export default function AdminMatchesPage() {
     league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '',
     stage: 'Group Stage', pts_exact: 3, pts_result: 1, pts_win: 1,
   })
+  const [showAddTeam, setShowAddTeam] = useState(false)
+  const [newTeam, setNewTeam] = useState({ name: '', code: '', flag_url: '' })
 
   const createMatch = useMutation({
     mutationFn: async () => {
@@ -65,7 +67,26 @@ export default function AdminMatchesPage() {
     },
   })
 
+  const addTeam = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('teams').insert({
+        league_id: form.league_id,
+        name: newTeam.name,
+        code: newTeam.code.toUpperCase(),
+        flag_url: newTeam.flag_url || null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setNewTeam({ name: '', code: '', flag_url: '' })
+      setShowAddTeam(false)
+      qc.invalidateQueries({ queryKey: ['teams'] })
+    },
+  })
+
   const teamsByLeague = groupBy(teams ?? [], 'league_id')
+
+  const leagueTeams = teamsByLeague[form.league_id] ?? []
 
   const enterResult = useMutation({
     mutationFn: async ({ matchId, homeScore, awayScore }: { matchId: string; homeScore: number; awayScore: number }) => {
@@ -111,16 +132,40 @@ export default function AdminMatchesPage() {
             <option value="">Select league</option>
             {leagues?.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
+          {form.league_id && leagueTeams.length === 0 && (
+            <div className="text-sm text-warning bg-yellow-50 rounded-lg p-3">
+              No teams in this league. <button className="text-primary underline" onClick={() => setShowAddTeam(true)}>Add a team</button>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <select className="px-3 py-2 border border-border rounded-lg text-sm" value={form.home_team_id} onChange={e => setForm(f => ({ ...f, home_team_id: e.target.value }))}>
               <option value="">Home team</option>
-              {(teamsByLeague[form.league_id] ?? []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {leagueTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
             <select className="px-3 py-2 border border-border rounded-lg text-sm" value={form.away_team_id} onChange={e => setForm(f => ({ ...f, away_team_id: e.target.value }))}>
               <option value="">Away team</option>
-              {(teamsByLeague[form.league_id] ?? []).filter(t => t.id !== form.home_team_id).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {leagueTeams.filter(t => t.id !== form.home_team_id).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
+          {leagueTeams.length > 0 && (
+            <button className="text-xs text-primary underline" onClick={() => setShowAddTeam(true)}>+ Add another team</button>
+          )}
+          {showAddTeam && (
+            <div className="border border-border rounded-lg p-3 space-y-2 bg-gray-50">
+              <div className="font-medium text-sm">Quick Add Team</div>
+              <div className="grid grid-cols-3 gap-2">
+                <Input placeholder="Team name" value={newTeam.name} onChange={e => setNewTeam(t => ({ ...t, name: e.target.value }))} />
+                <Input placeholder="Code (e.g. BAR)" value={newTeam.code} onChange={e => setNewTeam(t => ({ ...t, code: e.target.value.toUpperCase() }))} maxLength={3} />
+                <Input placeholder="Flag URL (optional)" value={newTeam.flag_url} onChange={e => setNewTeam(t => ({ ...t, flag_url: e.target.value }))} />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="primary" onClick={() => addTeam.mutate()} disabled={!newTeam.name || !newTeam.code || addTeam.isPending}>
+                  {addTeam.isPending ? 'Adding...' : 'Add Team'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowAddTeam(false); setNewTeam({ name: '', code: '', flag_url: '' }) }}>Cancel</Button>
+              </div>
+            </div>
+          )}
           <Input type="datetime-local" value={form.kickoff_at} onChange={e => setForm(f => ({ ...f, kickoff_at: e.target.value }))} />
           <div className="grid grid-cols-4 gap-2">
             <select className="px-2 py-2 border border-border rounded-lg text-sm" value={form.stage} onChange={e => setForm(f => ({ ...f, stage: e.target.value }))}>
