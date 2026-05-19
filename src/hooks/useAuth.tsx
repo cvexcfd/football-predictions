@@ -17,13 +17,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('player')
-    if (stored) {
-      try {
-        setPlayer(JSON.parse(stored))
-      } catch { /* ignore */ }
-    }
-    setIsLoading(false)
+    (async () => {
+      const stored = sessionStorage.getItem('player')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          const { data } = await supabase.from('players').select('id').eq('id', parsed.id).maybeSingle()
+          if (data) {
+            setPlayer(parsed)
+          } else {
+            sessionStorage.removeItem('player')
+          }
+        } catch {
+          sessionStorage.removeItem('player')
+        }
+      }
+      setIsLoading(false)
+    })()
   }, [])
 
   const login = useCallback(async (code: string) => {
