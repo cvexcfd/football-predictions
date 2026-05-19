@@ -32,14 +32,14 @@ export default function AdminLeaguesPage() {
 
   return (
     <div className="pb-20 max-w-3xl mx-auto">
-      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
-        <h1 className="text-lg font-semibold opacity-90">Admin</h1>
-        <p className="text-2xl font-bold mt-1">Leagues</p>
+      <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+        <h1 className="text-lg font-semibold text-text">Admin</h1>
+        <p className="text-2xl font-bold mt-1 text-text">Leagues</p>
       </div>
 
       <div className="px-4">
-        <div className="bg-white rounded-xl shadow-sm border border-border/50 p-4 mb-4">
-          <h2 className="font-semibold text-sm mb-3">Create League</h2>
+        <div className="glass rounded-2xl p-4 mb-4">
+          <h2 className="font-semibold text-sm text-text mb-3">Create League</h2>
           <div className="space-y-3">
             <Input placeholder="Name (e.g. FIFA World Cup 2026)" value={name} onChange={e => setName(e.target.value)} />
             <Input placeholder="Season (e.g. 2026)" value={season} onChange={e => setSeason(e.target.value)} />
@@ -52,12 +52,12 @@ export default function AdminLeaguesPage() {
 
         <div className="space-y-2">
           {leagues?.map(l => (
-            <div key={l.id} className="bg-white rounded-xl shadow-sm border border-border/50 p-4 flex items-center justify-between">
+            <div key={l.id} className="glass rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <div className="font-semibold">{l.name}</div>
+                <div className="font-semibold text-text">{l.name}</div>
                 <div className="text-xs text-text-muted mt-0.5">{l.season}{l.description ? ` — ${l.description}` : ''}</div>
               </div>
-              <div className={`text-xs px-2.5 py-1 rounded-full font-medium ${l.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-text-muted'}`}>
+              <div className={`text-xs px-2.5 py-1 rounded-full font-medium ${l.is_active ? 'bg-success/10 text-success border border-success/20' : 'bg-surface-alt text-text-muted border border-border/50'}`}>
                 {l.is_active ? 'Active' : 'Inactive'}
               </div>
             </div>

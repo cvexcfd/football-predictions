@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui'
 import { APP_NAME } from '../lib/constants'
@@ -8,6 +8,14 @@ export default function LoginPage() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [offsetY, setOffsetY] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleScroll = () => setOffsetY(window.scrollY * 0.3)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   if (player) {
     window.location.href = '/matches'
@@ -26,43 +34,79 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-surface to-accent/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div ref={ref} className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background video */}
+      <div className="absolute inset-0 z-0">
+        <video
+          autoPlay muted loop playsInline
+          poster="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1920&q=80"
+          className="w-full h-full object-cover scale-110"
+          style={{ transform: `translateY(${offsetY}px) scale(1.1)` }}
+        >
+          <source src="https://cdn.coverr.co/videos/coverr-football-stadium-crowd-cheering-4313/1080p.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-surface/95 via-surface/80 to-surface/95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/50" />
+        {/* Pitch pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.3) 60px, rgba(255,255,255,0.3) 61px), repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.3) 60px, rgba(255,255,255,0.3) 61px)'
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4 drop-shadow-lg">⚽</div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {APP_NAME}
+          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-surface-alt glass flex items-center justify-center text-4xl shadow-lg animate-pulse-glow">
+            ⚽
+          </div>
+          <h1 className="text-4xl font-black tracking-tight">
+            <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+              {APP_NAME}
+            </span>
           </h1>
-          <p className="text-text-muted text-sm mt-2">World Cup 2026 Predictions</p>
+          <p className="text-text-muted text-sm mt-2 font-medium">World Cup 2026 · Prediction Game</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-border/50 p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="glass-strong rounded-2xl p-6 space-y-4 shadow-2xl">
           <div>
             <input
               type="text"
-              placeholder="Access code"
-              className="w-full px-4 py-3.5 text-center text-lg font-mono tracking-[0.3em] uppercase border-2 border-border/50 focus:border-primary rounded-xl outline-none transition-colors"
+              placeholder="Enter access code"
+              className="w-full px-4 py-3.5 text-center text-lg font-mono tracking-[0.3em] uppercase bg-surface border border-border/50 focus:border-primary rounded-xl text-text outline-none transition-all duration-200 placeholder:text-text-dim"
               value={code}
               onChange={e => setCode(e.target.value)}
               maxLength={10}
               autoFocus
             />
-            <p className="text-[10px] text-text-muted text-center mt-1.5">Enter the code your admin gave you</p>
+            <p className="text-[10px] text-text-dim text-center mt-1.5">Enter the code your admin gave you</p>
           </div>
 
           {error && (
-            <div className="text-sm text-danger text-center bg-red-50/80 rounded-xl px-4 py-2.5 border border-red-100">{error}</div>
+            <div className="text-sm text-danger text-center bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/20">
+              {error}
+            </div>
           )}
 
           <Button
             variant="primary"
             size="lg"
-            className="w-full rounded-xl shadow-lg shadow-primary/20"
+            className="w-full"
             disabled={loading || code.length < 3}
             type="submit"
           >
-            {loading ? 'Checking...' : 'Play'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Checking...
+              </span>
+            ) : 'Play'}
           </Button>
+
+          <p className="text-center text-[10px] text-text-dim">
+            ⚡ Predict scores · Earn points · Win badges
+          </p>
         </form>
       </div>
     </div>

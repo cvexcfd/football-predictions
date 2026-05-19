@@ -34,16 +34,16 @@ export default function AdminAuditPage() {
 
   return (
     <div className="pb-20 max-w-3xl mx-auto">
-      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
-        <h1 className="text-lg font-semibold opacity-90">Admin</h1>
-        <p className="text-2xl font-bold mt-1">Audit Log</p>
+      <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+        <h1 className="text-lg font-semibold text-text">Admin</h1>
+        <p className="text-2xl font-bold mt-1 text-text">Audit Log</p>
       </div>
 
       <div className="px-4">
-        <div className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden">
+        <div className="glass rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border/50 bg-gray-50/50">
+              <tr className="border-b border-border/50">
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs">Player</th>
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs">Action</th>
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs hidden sm:table-cell">Match</th>
@@ -54,10 +54,10 @@ export default function AdminAuditPage() {
             </thead>
             <tbody>
               {logs?.map(l => (
-                <tr key={l.id} className="border-b border-border/50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-3 py-2.5 font-medium text-sm">{l.player?.name ?? '?'}</td>
+                <tr key={l.id} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors">
+                  <td className="px-3 py-2.5 font-medium text-sm text-text">{l.player?.name ?? '?'}</td>
                   <td className="px-3 py-2.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${l.action === 'create' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${l.action === 'create' ? 'bg-success/10 text-success border border-success/20' : 'bg-primary/10 text-primary border border-primary/20'}`}>
                       {l.action}
                     </span>
                   </td>

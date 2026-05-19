@@ -31,9 +31,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             className={cn(
               'px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-slide-in backdrop-blur-sm',
-              t.type === 'success' && 'bg-green-600/90 text-white',
-              t.type === 'error' && 'bg-red-600/90 text-white',
-              t.type === 'info' && 'bg-blue-600/90 text-white',
+              t.type === 'success' && 'bg-success/90 text-white',
+              t.type === 'error' && 'bg-danger/90 text-white',
+              t.type === 'info' && 'bg-primary/90 text-white',
             )}
           >
             <div className="flex items-center gap-2">

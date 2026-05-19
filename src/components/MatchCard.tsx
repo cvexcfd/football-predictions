@@ -2,12 +2,17 @@ import { useAuth } from '../hooks/useAuth'
 import { useSubmitPrediction } from '../hooks/usePredictions'
 import { usePlayerBadges } from '../hooks/useBadges'
 import { useToast } from './Toast'
-import { Button } from './ui'
+import { Button, Badge, Select } from './ui'
 import { useState } from 'react'
 import type { Match, Prediction } from '../types'
 import { formatDateTime, isMatchUpcoming } from '../lib/utils'
 
-export function MatchCard({ match }: { match: Match & { prediction?: Prediction | null } }) {
+interface Props {
+  match: Match & { prediction?: Prediction | null }
+  index?: number
+}
+
+export function MatchCard({ match, index = 0 }: Props) {
   const { player } = useAuth()
   const { toast } = useToast()
   const submitPrediction = useSubmitPrediction()
@@ -19,6 +24,7 @@ export function MatchCard({ match }: { match: Match & { prediction?: Prediction 
   const upcoming = match.status === 'upcoming' && isMatchUpcoming(match.kickoff_at)
   const locked = match.status === 'locked' || match.status === 'finished'
   const finished = match.status === 'finished'
+  const isLive = !finished && match.status === 'locked' && new Date(match.kickoff_at).getTime() > Date.now() - 130 * 60 * 1000
 
   const handleSubmit = async () => {
     if (!player || predHome === '' || predAway === '') return
@@ -49,111 +55,174 @@ export function MatchCard({ match }: { match: Match & { prediction?: Prediction 
     }
   }
 
+  const homeCode = match.home_team?.code ?? match.home_team?.name?.slice(0, 3).toUpperCase() ?? '?'
+  const awayCode = match.away_team?.code ?? match.away_team?.name?.slice(0, 3).toUpperCase() ?? '?'
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-border/50 p-4 hover:shadow-md transition-shadow animate-fade-in">
+    <div
+      className="glass rounded-2xl p-4 hover:border-border-light transition-all duration-300 animate-fade-in"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      {/* Top row: stage + status + time */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {match.stage && <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded-full">{match.stage}</span>}
-          {upcoming && <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Open</span>}
-          {locked && !finished && <span className="text-[10px] font-medium text-amber bg-amber/10 px-2 py-0.5 rounded-full">Locked</span>}
-          {finished && <span className="text-[10px] font-medium text-text-muted bg-gray-100 px-2 py-0.5 rounded-full">Finished</span>}
+          {match.stage && (
+            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-surface-alt px-2 py-0.5 rounded-full">
+              {match.stage}
+            </span>
+          )}
+          {upcoming && <Badge variant="primary">OPEN</Badge>}
+          {isLive && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+              <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse-dot" />
+              LIVE
+            </span>
+          )}
+          {locked && !finished && !isLive && <Badge variant="warning">LOCKED</Badge>}
+          {finished && <Badge variant="default">FINISHED</Badge>}
         </div>
-        <span className="text-[11px] text-text-muted">{formatDateTime(match.kickoff_at)}</span>
+        <span className="text-[11px] text-text-dim font-medium">{formatDateTime(match.kickoff_at)}</span>
       </div>
 
-      <div className="flex items-center justify-between gap-3 my-4">
-        <div className="flex-1 flex items-center gap-2 min-w-0">
-          {match.home_team?.flag_url && <img src={match.home_team.flag_url} alt="" className="w-6 h-4 object-contain shrink-0" />}
-          <span className="font-semibold text-sm truncate">{match.home_team?.name ?? '?'}</span>
+      {/* Teams vs divider */}
+      <div className="flex items-center justify-between my-4">
+        {/* Home */}
+        <div className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+          <div className="w-10 h-7 rounded-lg bg-surface-alt flex items-center justify-center overflow-hidden">
+            {match.home_team?.flag_url
+              ? <img src={match.home_team.flag_url} alt="" className="w-full h-full object-contain" />
+              : <span className="text-lg font-bold text-text-dim">{homeCode[0]}</span>
+            }
+          </div>
+          <span className="font-extrabold text-lg tracking-tight text-text">{homeCode}</span>
+          <span className="text-[10px] text-text-muted text-center truncate w-full leading-tight">{match.home_team?.name ?? '?'}</span>
         </div>
 
-        {upcoming && (
-          <div className="flex items-center gap-1 shrink-0">
-            <input
-              type="number" min="0" max="99"
-              className="w-12 h-11 text-center border-2 border-border focus:border-primary rounded-xl text-lg font-bold outline-none transition-colors"
-              value={predHome}
-              onChange={e => setPredHome(e.target.value)}
-              disabled={submitPrediction.isPending}
-            />
-            <span className="text-text-muted font-bold px-0.5">:</span>
-            <input
-              type="number" min="0" max="99"
-              className="w-12 h-11 text-center border-2 border-border focus:border-primary rounded-xl text-lg font-bold outline-none transition-colors"
-              value={predAway}
-              onChange={e => setPredAway(e.target.value)}
-              disabled={submitPrediction.isPending}
-            />
+        {/* Score / Prediction / VS */}
+        <div className="flex flex-col items-center mx-3 min-w-[80px]">
+          {upcoming && (
+            <div className="flex items-center gap-1">
+              <input
+                type="number" min="0" max="99"
+                className="w-11 h-11 text-center bg-surface-alt border-2 border-border/50 focus:border-primary rounded-xl text-lg font-extrabold text-text outline-none transition-all duration-200"
+                value={predHome}
+                onChange={e => setPredHome(e.target.value)}
+                disabled={submitPrediction.isPending}
+              />
+              <span className="text-text-muted font-bold text-lg">:</span>
+              <input
+                type="number" min="0" max="99"
+                className="w-11 h-11 text-center bg-surface-alt border-2 border-border/50 focus:border-primary rounded-xl text-lg font-extrabold text-text outline-none transition-all duration-200"
+                value={predAway}
+                onChange={e => setPredAway(e.target.value)}
+                disabled={submitPrediction.isPending}
+              />
+            </div>
+          )}
+          {locked && (
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-1.5 text-xl font-extrabold">
+                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.pred_home ?? '-'}</span>
+                <span className="text-text-dim font-bold">:</span>
+                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.pred_away ?? '-'}</span>
+              </div>
+              {finished && match.prediction && (
+                <span className={`text-[10px] font-bold ${match.prediction.pts_total > 0 ? 'text-success' : 'text-text-dim'}`}>
+                  {match.prediction.pts_total > 0 ? `+${match.prediction.pts_total}` : '0 pts'}
+                </span>
+              )}
+            </div>
+          )}
+          {!upcoming && !locked && (
+            <span className="text-text-dim text-xs">—</span>
+          )}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-[10px] font-semibold text-text-dim bg-surface-alt px-2 py-0.5 rounded-full">VS</span>
           </div>
-        )}
+        </div>
 
-        {locked && (
-          <div className="flex items-center gap-1 text-lg font-bold shrink-0">
-            <span>{match.prediction?.pred_home ?? '-'}</span>
-            <span className="text-text-muted">:</span>
-            <span>{match.prediction?.pred_away ?? '-'}</span>
-            {finished && match.prediction && (
-              <span className="text-xs text-text-muted ml-1">
-                ({match.prediction.pts_total > 0 ? '+' : ''}{match.prediction.pts_total})
-              </span>
-            )}
+        {/* Away */}
+        <div className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+          <div className="w-10 h-7 rounded-lg bg-surface-alt flex items-center justify-center overflow-hidden">
+            {match.away_team?.flag_url
+              ? <img src={match.away_team.flag_url} alt="" className="w-full h-full object-contain" />
+              : <span className="text-lg font-bold text-text-dim">{awayCode[0]}</span>
+            }
           </div>
-        )}
-
-        <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-          <span className="font-semibold text-sm truncate">{match.away_team?.name ?? '?'}</span>
-          {match.away_team?.flag_url && <img src={match.away_team.flag_url} alt="" className="w-6 h-4 object-contain shrink-0" />}
+          <span className="font-extrabold text-lg tracking-tight text-text">{awayCode}</span>
+          <span className="text-[10px] text-text-muted text-center truncate w-full leading-tight">{match.away_team?.name ?? '?'}</span>
         </div>
       </div>
 
+      {/* Actual score for finished matches */}
       {finished && actualH !== null && actualA !== null && (
-        <div className="flex items-center justify-center gap-2 mb-3 bg-gray-50 rounded-lg py-2">
-          <span className="text-xs font-medium">{match.home_team?.name}</span>
-          <span className="font-bold text-sm">{actualH}</span>
-          <span className="text-text-muted text-xs">-</span>
-          <span className="font-bold text-sm">{actualA}</span>
-          <span className="text-xs font-medium">{match.away_team?.name}</span>
+        <div className="flex items-center justify-center gap-3 mb-3 bg-surface-alt rounded-xl py-2 px-4">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-3 rounded overflow-hidden">
+              {match.home_team?.flag_url && <img src={match.home_team.flag_url} alt="" className="w-full h-full object-contain" />}
+            </div>
+            <span className="text-xs font-medium text-text-muted">{match.home_team?.name?.slice(0, 8) ?? '?'}</span>
+          </div>
+          <span className="font-extrabold text-lg text-text">{actualH}</span>
+          <span className="text-text-dim text-xs">—</span>
+          <span className="font-extrabold text-lg text-text">{actualA}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-text-muted">{match.away_team?.name?.slice(0, 8) ?? '?'}</span>
+            <div className="w-4 h-3 rounded overflow-hidden">
+              {match.away_team?.flag_url && <img src={match.away_team.flag_url} alt="" className="w-full h-full object-contain" />}
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Result badges */}
       {resultBadge && (
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {resultBadge === 'exact' && <span className="px-2.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded-full font-semibold">Exact Score ✓</span>}
-          {resultBadge === 'result' && <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded-full font-semibold">Correct Result ✓</span>}
-          {resultBadge === 'wrong' && <span className="px-2.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full font-semibold">Wrong ✗</span>}
-          <span className="text-sm font-bold text-text">+{match.prediction?.pts_total ?? 0} pts</span>
+        <div className="flex items-center justify-center gap-2 mb-3">
+          {resultBadge === 'exact' && (
+            <span className="px-3 py-1 text-[11px] font-bold text-gold bg-gold/10 rounded-full border border-gold/30 shadow-lg shadow-gold/10">
+              ⚡ Exact Score
+            </span>
+          )}
+          {resultBadge === 'result' && (
+            <span className="px-3 py-1 text-[11px] font-semibold text-primary bg-primary/10 rounded-full border border-primary/20">
+              ✓ Correct Result
+            </span>
+          )}
+          {resultBadge === 'wrong' && (
+            <span className="px-3 py-1 text-[11px] font-semibold text-danger bg-red-500/10 rounded-full border border-red-500/20">
+              ✗ Wrong
+            </span>
+          )}
+          <span className="text-sm font-bold text-success">+{match.prediction?.pts_total ?? 0}</span>
           {match.prediction?.badge && (
-            <span className="text-[10px] text-text-muted bg-gray-100 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">
               {match.prediction.badge.name} ({match.prediction.badge.type === 'multiplier' ? '×' : '+'}{match.prediction.badge.factor})
             </span>
           )}
         </div>
       )}
 
+      {/* Prediction form */}
       {upcoming && (
         <div className="space-y-2 mt-3 border-t border-border/50 pt-3">
           {badges && badges.length > 0 && (
-            <select
-              className="w-full px-3 py-2 border border-border rounded-xl text-sm bg-white focus:border-primary outline-none transition-colors"
-              value={selectedBadge}
-              onChange={e => setSelectedBadge(e.target.value)}
-            >
+            <Select value={selectedBadge} onChange={e => setSelectedBadge(e.target.value)}>
               <option value="">No badge</option>
               {badges.map(b => (
                 <option key={b.id} value={b.badge_id}>
                   {b.badge?.name} ({b.badge?.type === 'multiplier' ? '×' : '+'}{b.badge?.factor}) — {b.quantity} left
                 </option>
               ))}
-            </select>
+            </Select>
           )}
           <Button
             variant="primary"
             size="sm"
-            className="w-full rounded-xl"
+            className="w-full"
             onClick={handleSubmit}
             disabled={submitPrediction.isPending || predHome === '' || predAway === ''}
           >
-            {submitPrediction.isPending ? 'Saving...' : match.prediction ? 'Update Prediction ✓' : 'Submit Prediction'}
+            {submitPrediction.isPending ? 'Saving...' : match.prediction ? 'Update Prediction' : 'Submit Prediction'}
           </Button>
         </div>
       )}

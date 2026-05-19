@@ -1,42 +1,73 @@
 import { useAuth } from '../hooks/useAuth'
 import { useMatches } from '../hooks/useMatches'
 import { MatchCard } from '../components/MatchCard'
-import { LoadingSpinner } from '../components/ui'
+import { EmptyState, SkeletonCard } from '../components/ui'
 import { groupBy } from '../lib/utils'
 
 export default function MatchesPage() {
   const { player } = useAuth()
   const { data: matches, isLoading } = useMatches('upcoming', player?.id)
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) {
+    return (
+      <div className="pb-20 max-w-3xl mx-auto">
+        <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+          <div className="h-4 w-24 bg-border rounded mb-2 animate-shimmer" />
+          <div className="h-8 w-48 bg-border rounded mb-1 animate-shimmer" />
+          <div className="h-4 w-20 bg-border rounded animate-shimmer" />
+        </div>
+        <div className="px-4 space-y-3">
+          {[0, 1, 2].map(i => <SkeletonCard key={i} />)}
+        </div>
+      </div>
+    )
+  }
 
   const grouped = groupBy(matches ?? [], m => {
     const d = new Date(m.kickoff_at)
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   })
 
+  const matchCount = Object.keys(grouped).length
+
+  if (matchCount === 0) {
+    return (
+      <div className="pb-20 max-w-3xl mx-auto">
+        <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+          <h1 className="text-lg font-semibold opacity-90 text-text">World Cup 2026</h1>
+          <p className="text-2xl font-bold mt-1 text-text">Upcoming Matches</p>
+        </div>
+        <EmptyState
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+          title="No upcoming matches"
+          description="Check back later for the next match schedule"
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="pb-20 max-w-3xl mx-auto">
-      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
-        <h1 className="text-lg font-semibold opacity-90">World Cup 2026</h1>
-        <p className="text-2xl font-bold mt-1">Upcoming Matches</p>
-        <p className="text-sm opacity-80 mt-1">{Object.keys(grouped).length} match days</p>
+      <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+        <h1 className="text-lg font-semibold opacity-90 text-text">World Cup 2026</h1>
+        <p className="text-2xl font-bold mt-1 text-text">Upcoming Matches</p>
+        <p className="text-sm text-text-muted mt-1">{matchCount} match days</p>
       </div>
       <div className="px-4">
-        {Object.keys(grouped).length === 0 ? (
-          <div className="text-center py-12 text-text-muted">No upcoming matches</div>
-        ) : (
-          Object.entries(grouped).map(([date, dayMatches]) => (
-            <div key={date} className="mb-6">
-              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
-              <div className="space-y-3">
-                {dayMatches.map(m => (
-                  <MatchCard key={m.id} match={m} />
-                ))}
-              </div>
+        {Object.entries(grouped).map(([date, dayMatches]) => (
+          <div key={date} className="mb-6">
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
+            <div className="space-y-3">
+              {dayMatches.map((m, i) => (
+                <MatchCard key={m.id} match={m} index={i} />
+              ))}
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
     </div>
   )

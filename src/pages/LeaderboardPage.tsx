@@ -100,10 +100,10 @@ export default function LeaderboardPage() {
 
   return (
     <div className="pb-20 max-w-3xl mx-auto">
-      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
-        <h1 className="text-lg font-semibold opacity-90">World Cup 2026</h1>
-        <p className="text-2xl font-bold mt-1">Leaderboard</p>
-        <p className="text-sm opacity-80 mt-1">
+      <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
+        <h1 className="text-lg font-semibold text-text">World Cup 2026</h1>
+        <p className="text-2xl font-bold mt-1 text-text">Leaderboard</p>
+        <p className="text-sm text-text-muted mt-1">
           {leaderboard ? `${leaderboard.length} players` : 'Rankings'}
         </p>
       </div>
@@ -112,17 +112,17 @@ export default function LeaderboardPage() {
         {hasLive && (
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse-dot" />
               Live Matches
             </h2>
             <div className="space-y-3">
               {liveMatches!.map(m => (
-                <div key={m.id} className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden animate-fade-in">
-                  <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-red-50 to-orange-50 border-b border-border/50">
+                <div key={m.id} className="glass rounded-2xl overflow-hidden animate-fade-in">
+                  <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-red-500/10 to-orange-500/10 border-b border-border/50">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-white/80 px-2 py-0.5 rounded-full">{m.stage}</span>
-                      <span className="text-[10px] text-red-600 font-medium flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                      {m.stage && <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-surface px-2 py-0.5 rounded-full">{m.stage}</span>}
+                      <span className="text-[10px] text-red-400 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse-dot" />
                         LIVE
                       </span>
                     </div>
@@ -135,11 +135,11 @@ export default function LeaderboardPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {m.home_team?.flag_url && <img src={m.home_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
-                        <span className="font-semibold text-sm truncate">{m.home_team?.name}</span>
+                        <span className="font-semibold text-sm text-text truncate">{m.home_team?.name}</span>
                       </div>
                       <span className="font-bold text-sm text-text-muted shrink-0 mx-2">vs</span>
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-semibold text-sm truncate">{m.away_team?.name}</span>
+                        <span className="font-semibold text-sm text-text truncate">{m.away_team?.name}</span>
                         {m.away_team?.flag_url && <img src={m.away_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
                       </div>
                     </div>
@@ -149,12 +149,12 @@ export default function LeaderboardPage() {
                         <div className="text-xs text-text-muted text-center py-2">No predictions yet</div>
                       ) : (
                         m.predictions.map(p => (
-                          <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors">
-                            <span className="font-medium">{p.player?.name ?? '?'}</span>
+                          <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-surface-alt transition-colors">
+                            <span className="font-medium text-text">{p.player?.name ?? '?'}</span>
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-primary">{p.pred_home}-{p.pred_away}</span>
                               {p.badge && (
-                                <span className="text-[10px] text-text-muted bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                <span className="text-[10px] text-text-muted bg-surface-alt px-1.5 py-0.5 rounded-full">
                                   {p.badge.name} ({p.badge.type === 'multiplier' ? '×' : '+'}{p.badge.factor})
                                 </span>
                               )}
@@ -173,10 +173,10 @@ export default function LeaderboardPage() {
         {(!leaderboard || leaderboard.length === 0) ? (
           <div className="text-center py-12 text-text-muted">No players yet</div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden">
+          <div className="glass rounded-2xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border/50 bg-gray-50/50">
+                <tr className="border-b border-border/50">
                   <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">#</th>
                   <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">Player</th>
                   <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs">Points</th>
@@ -185,19 +185,19 @@ export default function LeaderboardPage() {
               </thead>
               <tbody>
                 {leaderboard.map((entry, i) => (
-                  <tr key={entry.id} className="border-b border-border/50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                  <tr key={entry.id} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors animate-rank-enter" style={{ animationDelay: `${i * 40}ms` }}>
                     <td className="px-4 py-3.5 font-bold w-10">
                       {i === 0 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-yellow-100 rounded-full text-sm">🥇</span>
+                        <span className="inline-flex items-center justify-center w-7 h-7 bg-gold/20 rounded-full text-sm">🥇</span>
                       ) : i === 1 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-gray-100 rounded-full text-sm">🥈</span>
+                        <span className="inline-flex items-center justify-center w-7 h-7 bg-surface-alt rounded-full text-sm">🥈</span>
                       ) : i === 2 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-50 rounded-full text-sm">🥉</span>
+                        <span className="inline-flex items-center justify-center w-7 h-7 bg-gold/10 rounded-full text-sm">🥉</span>
                       ) : (
                         <span className="text-text-muted text-xs">#{i + 1}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 font-semibold">{entry.name}</td>
+                    <td className="px-4 py-3.5 font-semibold text-text">{entry.name}</td>
                     <td className="px-4 py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
                     <td className="px-4 py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>
                   </tr>
