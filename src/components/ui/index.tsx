@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils'
 
 export function Card({ className, children, ...props }: { className?: string; children: ReactNode; [key: string]: unknown }) {
   return (
-    <div className={cn('bg-white rounded-lg border border-border shadow-sm p-4', className)} {...props}>
+    <div className={cn('bg-white rounded-xl border border-border/50 shadow-sm p-4', className)} {...props}>
       {children}
     </div>
   )
@@ -42,7 +42,7 @@ export function Button({ className, variant = 'default', size = 'md', children, 
 
   return (
     <button
-      className={cn('inline-flex items-center justify-center rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed', variantClasses[variant], sizeClasses[size], className)}
+      className={cn('inline-flex items-center justify-center rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed', variantClasses[variant], sizeClasses[size], className)}
       {...props}
     >
       {children}
@@ -53,7 +53,7 @@ export function Button({ className, variant = 'default', size = 'md', children, 
 export function Input({ className, ...props }: { className?: string; [key: string]: unknown }) {
   return (
     <input
-      className={cn('w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent', className)}
+      className={cn('w-full px-3 py-2 border border-border/50 rounded-xl text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all', className)}
       {...props}
     />
   )
@@ -62,9 +62,9 @@ export function Input({ className, ...props }: { className?: string; [key: strin
 export function Badge({ className, variant = 'default', children }: { className?: string; variant?: 'default' | 'success' | 'danger' | 'warning'; children: ReactNode }) {
   const variantClasses = {
     default: 'bg-gray-100 text-text-muted',
-    success: 'bg-green-100 text-success',
-    danger: 'bg-red-100 text-danger',
-    warning: 'bg-yellow-100 text-warning',
+    success: 'bg-green-100 text-green-700',
+    danger: 'bg-red-100 text-red-700',
+    warning: 'bg-yellow-100 text-yellow-700',
   }
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', variantClasses[variant], className)}>

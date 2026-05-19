@@ -45,6 +45,7 @@ export function useSubmitPrediction() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['matches'] })
       qc.invalidateQueries({ queryKey: ['prediction'] })
+      qc.invalidateQueries({ queryKey: ['player-badges'] })
     },
   })
 }

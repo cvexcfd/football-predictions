@@ -32,6 +32,9 @@ export function usePlayerStats(playerId: string) {
           match: `${p.match?.home_team?.name ?? '?'} vs ${p.match?.away_team?.name ?? '?'}`,
           points: p.pts_total,
           date: p.match?.kickoff_at ?? p.updated_at,
+          badgeUsed: p.badge_id_used ? 'Yes' : 'No',
+          result: p.pred_result,
+          predScore: `${p.pred_home}-${p.pred_away}`,
         }))
         .reverse()
 

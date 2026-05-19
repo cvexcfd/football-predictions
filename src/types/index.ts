@@ -131,5 +131,5 @@ export interface PlayerStats {
   exactScores: number
   totalPoints: number
   badgesUsed: number
-  pointsPerMatch: { match: string; points: number; date: string }[]
+  pointsPerMatch: { match: string; points: number; date: string; badgeUsed: string; result: string; predScore: string }[]
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { Card, CardContent, LoadingSpinner } from '../components/ui'
+import { LoadingSpinner } from '../components/ui'
 
 export default function AdminDashboard() {
   const { data: counts } = useQuery({
@@ -23,40 +23,64 @@ export default function AdminDashboard() {
   if (!counts) return <LoadingSpinner />
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold text-text mb-4">Admin Dashboard</h1>
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardContent>
+    <div className="pb-20 max-w-3xl mx-auto">
+      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
+        <h1 className="text-lg font-semibold opacity-90">Admin</h1>
+        <p className="text-2xl font-bold mt-1">Dashboard</p>
+      </div>
+
+      <div className="px-4">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center border border-border/50">
             <div className="text-2xl font-bold text-primary">{counts.totalMatches}</div>
             <div className="text-xs text-text-muted mt-1">Total Matches</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center border border-border/50">
             <div className="text-2xl font-bold text-success">{counts.finishedMatches}</div>
             <div className="text-xs text-text-muted mt-1">Finished</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center border border-border/50">
             <div className="text-2xl font-bold">{counts.playerCount}</div>
             <div className="text-xs text-text-muted mt-1">Players</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center border border-border/50">
             <div className="text-2xl font-bold">{counts.leagueCount}</div>
             <div className="text-xs text-text-muted mt-1">Leagues</div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="mt-6 space-y-2">
-        <a href="/admin/leagues" className="block p-3 bg-white rounded-lg border border-border shadow-sm hover:bg-gray-50 font-medium text-sm">Manage Leagues →</a>
-        <a href="/admin/matches" className="block p-3 bg-white rounded-lg border border-border shadow-sm hover:bg-gray-50 font-medium text-sm">Manage Matches →</a>
-        <a href="/admin/badges" className="block p-3 bg-white rounded-lg border border-border shadow-sm hover:bg-gray-50 font-medium text-sm">Manage Badges →</a>
-        <a href="/admin/players" className="block p-3 bg-white rounded-lg border border-border shadow-sm hover:bg-gray-50 font-medium text-sm">Manage Players →</a>
-        <a href="/admin/audit" className="block p-3 bg-white rounded-lg border border-border shadow-sm hover:bg-gray-50 font-medium text-sm">Audit Log →</a>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <a href="/admin/leagues" className="block p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:shadow-md transition-shadow font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span>Manage Leagues</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
+          <a href="/admin/matches" className="block p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:shadow-md transition-shadow font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span>Manage Matches</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
+          <a href="/admin/badges" className="block p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:shadow-md transition-shadow font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span>Manage Badges</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
+          <a href="/admin/players" className="block p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:shadow-md transition-shadow font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span>Manage Players</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
+          <a href="/admin/audit" className="block p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:shadow-md transition-shadow font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span>Audit Log</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   )

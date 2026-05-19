@@ -4,6 +4,7 @@ import { AuthProvider } from './hooks/useAuth'
 import { ProtectedRoute, AdminRoute } from './components/RouteGuards'
 import { Navbar } from './components/Navbar'
 import { BottomNav } from './components/BottomNav'
+import { ToastProvider } from './components/Toast'
 
 import LoginPage from './pages/LoginPage'
 import MatchesPage from './pages/MatchesPage'
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LoginPage />} />
@@ -62,6 +64,7 @@ export default function App() {
             <Route path="/admin/audit" element={<AdminRoute><AdminLayout><AdminAuditPage /></AdminLayout></AdminRoute>} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   )

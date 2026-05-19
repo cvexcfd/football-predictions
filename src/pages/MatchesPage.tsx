@@ -16,22 +16,28 @@ export default function MatchesPage() {
   })
 
   return (
-    <div className="p-4 pb-20 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold text-text mb-4">Upcoming Matches</h1>
-      {Object.keys(grouped).length === 0 ? (
-        <div className="text-center py-12 text-text-muted">No upcoming matches</div>
-      ) : (
-        Object.entries(grouped).map(([date, dayMatches]) => (
-          <div key={date} className="mb-6">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
-            <div className="space-y-3">
-              {dayMatches.map(m => (
-                <MatchCard key={m.id} match={m} />
-              ))}
+    <div className="pb-20 max-w-3xl mx-auto">
+      <div className="bg-gradient-to-r from-primary to-accent p-6 mb-6 text-white shadow-lg">
+        <h1 className="text-lg font-semibold opacity-90">World Cup 2026</h1>
+        <p className="text-2xl font-bold mt-1">Upcoming Matches</p>
+        <p className="text-sm opacity-80 mt-1">{Object.keys(grouped).length} match days</p>
+      </div>
+      <div className="px-4">
+        {Object.keys(grouped).length === 0 ? (
+          <div className="text-center py-12 text-text-muted">No upcoming matches</div>
+        ) : (
+          Object.entries(grouped).map(([date, dayMatches]) => (
+            <div key={date} className="mb-6">
+              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
+              <div className="space-y-3">
+                {dayMatches.map(m => (
+                  <MatchCard key={m.id} match={m} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
