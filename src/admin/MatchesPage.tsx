@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { Button, Input, Select, LoadingSpinner } from '../components/ui'
+import { useToast } from '../components/Toast'
 import { formatDateTime, groupBy } from '../lib/utils'
 
 export default function AdminMatchesPage() {
   const qc = useQueryClient()
+  const { toast } = useToast()
   const [view, setView] = useState<'upcoming' | 'locked' | 'finished' | 'all'>('upcoming')
 
   const { data: leagues } = useQuery({
@@ -47,7 +49,7 @@ export default function AdminMatchesPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '',
-    stage: 'Group Stage', pts_exact: 3, pts_result: 1, pts_win: 1,
+    stage: 'Group Stage', pts_exact: 3, pts_result: 1,
   })
   const [showAddTeam, setShowAddTeam] = useState(false)
   const [newTeam, setNewTeam] = useState({ name: '', code: '', flag_url: '' })
@@ -55,14 +57,14 @@ export default function AdminMatchesPage() {
   const createMatch = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('matches').insert({
-        ...form,
+        ...form, pts_win: 0,
         kickoff_at: new Date(form.kickoff_at).toISOString(),
       })
       if (error) throw error
     },
     onSuccess: () => {
       setShowForm(false)
-      setForm({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: 'Group Stage', pts_exact: 3, pts_result: 1, pts_win: 1 })
+      setForm({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: 'Group Stage', pts_exact: 3, pts_result: 1 })
       qc.invalidateQueries({ queryKey: ['admin-matches'] })
     },
   })
@@ -97,7 +99,28 @@ export default function AdminMatchesPage() {
       })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+    onSuccess: () => {
+      toast('Score entered, points calculated', 'success')
+      qc.invalidateQueries({ queryKey: ['admin-matches'] })
+    },
+    onError: (err: Error) => {
+      toast(err.message, 'error')
+    },
+  })
+
+  const updateMatch = useMutation({
+    mutationFn: async (fields: Record<string, unknown>) => {
+      const { error } = await supabase.from('matches').update(fields).eq('id', fields.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setEditingMatch(null)
+      toast('Match updated', 'success')
+      qc.invalidateQueries({ queryKey: ['admin-matches'] })
+    },
+    onError: (err: Error) => {
+      toast(err.message, 'error')
+    },
   })
 
   const lockMatch = useMutation({
@@ -106,6 +129,7 @@ export default function AdminMatchesPage() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+    onError: (err: Error) => toast(err.message, 'error'),
   })
 
   const unlockMatch = useMutation({
@@ -114,6 +138,7 @@ export default function AdminMatchesPage() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+    onError: (err: Error) => toast(err.message, 'error'),
   })
 
   const deleteMatch = useMutation({
@@ -122,11 +147,27 @@ export default function AdminMatchesPage() {
       await supabase.from('matches').delete().eq('id', matchId)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+    onError: (err: Error) => toast(err.message, 'error'),
   })
 
   const [scoreInputs, setScoreInputs] = useState<Record<string, { h: string; a: string }>>({})
   const [editingScore, setEditingScore] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [editingMatch, setEditingMatch] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: '', pts_exact: 3, pts_result: 1 })
+
+  const startEdit = (m: Record<string, unknown>) => {
+    setEditingMatch(m.id as string)
+    setEditForm({
+      league_id: m.league_id as string,
+      home_team_id: m.home_team_id as string,
+      away_team_id: m.away_team_id as string,
+      kickoff_at: (m.kickoff_at as string).slice(0, 16),
+      stage: (m.stage as string) || 'Group Stage',
+      pts_exact: m.pts_exact as number,
+      pts_result: m.pts_result as number,
+    })
+  }
 
   if (isLoading) return <LoadingSpinner />
 
@@ -199,13 +240,12 @@ export default function AdminMatchesPage() {
             </div>
           )}
           <Input type="datetime-local" placeholder="Kickoff date/time" value={form.kickoff_at} onChange={e => setForm(f => ({ ...f, kickoff_at: e.target.value }))} />
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Select value={form.stage} onChange={e => setForm(f => ({ ...f, stage: e.target.value }))}>
               {['Group Stage', 'Round of 32', 'Round of 16', 'Quarter-Final', 'Semi-Final', 'Third Place', 'Final'].map(s => <option key={s}>{s}</option>)}
             </Select>
             <Input type="number" placeholder="Exact" value={form.pts_exact} onChange={e => setForm(f => ({ ...f, pts_exact: Number(e.target.value) }))} />
             <Input type="number" placeholder="Result" value={form.pts_result} onChange={e => setForm(f => ({ ...f, pts_result: Number(e.target.value) }))} />
-            <Input type="number" placeholder="Win" value={form.pts_win} onChange={e => setForm(f => ({ ...f, pts_win: Number(e.target.value) }))} />
           </div>
           <Button variant="primary" onClick={() => createMatch.mutate()} disabled={!form.league_id || !form.home_team_id || !form.away_team_id || !form.kickoff_at || createMatch.isPending}>
             {createMatch.isPending ? 'Creating...' : 'Create Match'}
@@ -231,6 +271,48 @@ export default function AdminMatchesPage() {
           const isEditingThis = editingScore === m.id
           const editH = isEditingThis ? scoreInputs[m.id]?.h ?? String(m.home_score ?? '') : ''
           const editA = isEditingThis ? scoreInputs[m.id]?.a ?? String(m.away_score ?? '') : ''
+          const isEditingDetails = editingMatch === m.id
+
+          if (isEditingDetails) {
+            const editTeams = teamsByLeague[editForm.league_id] ?? []
+            return (
+              <div key={m.id} className="glass rounded-2xl p-4 space-y-3 animate-fade-in">
+                <h2 className="font-semibold text-text text-sm">Edit Match</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={editForm.home_team_id} onChange={e => setEditForm(f => ({ ...f, home_team_id: e.target.value }))}>
+                    <option value="">Home team</option>
+                    {editTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </Select>
+                  <Select value={editForm.away_team_id} onChange={e => setEditForm(f => ({ ...f, away_team_id: e.target.value }))}>
+                    <option value="">Away team</option>
+                    {editTeams.filter(t => t.id !== editForm.home_team_id).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </Select>
+                </div>
+                <Input type="datetime-local" value={editForm.kickoff_at} onChange={e => setEditForm(f => ({ ...f, kickoff_at: e.target.value }))} />
+                <div className="grid grid-cols-3 gap-2">
+                  <Select value={editForm.stage} onChange={e => setEditForm(f => ({ ...f, stage: e.target.value }))}>
+                    {['Group Stage', 'Round of 32', 'Round of 16', 'Quarter-Final', 'Semi-Final', 'Third Place', 'Final'].map(s => <option key={s}>{s}</option>)}
+                  </Select>
+                  <Input type="number" placeholder="Exact" value={editForm.pts_exact} onChange={e => setEditForm(f => ({ ...f, pts_exact: Number(e.target.value) }))} />
+                  <Input type="number" placeholder="Result" value={editForm.pts_result} onChange={e => setEditForm(f => ({ ...f, pts_result: Number(e.target.value) }))} />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="primary" onClick={() => updateMatch.mutate({
+                    id: m.id,
+                    home_team_id: editForm.home_team_id,
+                    away_team_id: editForm.away_team_id,
+                    kickoff_at: new Date(editForm.kickoff_at).toISOString(),
+                    stage: editForm.stage,
+                    pts_exact: editForm.pts_exact,
+                    pts_result: editForm.pts_result,
+                  })} disabled={!editForm.home_team_id || !editForm.away_team_id || !editForm.kickoff_at || updateMatch.isPending}>
+                    {updateMatch.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setEditingMatch(null)}>Cancel</Button>
+                </div>
+              </div>
+            )
+          }
 
           return (
           <div key={m.id} className="glass rounded-2xl p-4">
@@ -243,15 +325,12 @@ export default function AdminMatchesPage() {
                   'bg-success/10 text-success border border-success/20'
                 }`}>{m.status}</span>
                 {m.status === 'upcoming' && (
-                  <Button size="sm" variant="ghost" className="text-[10px] px-1.5 py-0.5 h-auto rounded-lg text-warning" onClick={() => lockMatch.mutate(m.id)} disabled={lockMatch.isPending}>
-                    🔒
-                  </Button>
+                  <button className="text-xs text-warning hover:text-warning/80" onClick={() => lockMatch.mutate(m.id)} disabled={lockMatch.isPending} title="Lock match">🔒</button>
                 )}
                 {m.status === 'locked' && (
-                  <Button size="sm" variant="ghost" className="text-[10px] px-1.5 py-0.5 h-auto rounded-lg text-text-muted" onClick={() => unlockMatch.mutate(m.id)} disabled={unlockMatch.isPending}>
-                    🔓
-                  </Button>
+                  <button className="text-xs text-text-muted hover:text-text" onClick={() => unlockMatch.mutate(m.id)} disabled={unlockMatch.isPending} title="Unlock match">🔓</button>
                 )}
+                <button className="text-xs text-primary hover:text-primary-dark" onClick={() => startEdit(m)} title="Edit match details">✏️</button>
                 <button className="text-xs text-danger hover:text-red-400" onClick={() => setConfirmDelete(m.id)} title="Delete match">🗑️</button>
               </div>
             </div>
@@ -273,7 +352,7 @@ export default function AdminMatchesPage() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-xs text-text-muted">
-              <span className="bg-surface-alt px-2 py-0.5 rounded text-[10px]">E:{m.pts_exact} R:{m.pts_result} W:{m.pts_win}</span>
+              <span className="bg-surface-alt px-2 py-0.5 rounded text-[10px]">E:{m.pts_exact} R:{m.pts_result}</span>
               {m.status === 'locked' && !isEditingThis && (
                 <div className="flex items-center gap-1 ml-auto">
                   <input type="number" min="0" max="99" className="w-10 h-8 text-center bg-surface-alt border border-border/50 rounded-lg text-sm text-text outline-none focus:border-primary transition-colors" placeholder="H"
@@ -283,7 +362,7 @@ export default function AdminMatchesPage() {
                     value={scoreInputs[m.id]?.a ?? ''} onChange={e => setScoreInputs(r => ({ ...r, [m.id]: { ...r[m.id], a: e.target.value } }))} />
                   <Button size="sm" variant="primary" className="rounded-lg"
                     onClick={() => enterResult.mutate({ matchId: m.id, homeScore: Number(scoreInputs[m.id]?.h), awayScore: Number(scoreInputs[m.id]?.a) })}
-                    disabled={!scoreInputs[m.id]?.h || !scoreInputs[m.id]?.a}>
+                    disabled={scoreInputs[m.id]?.h === undefined || scoreInputs[m.id]?.a === undefined || scoreInputs[m.id]?.h === '' || scoreInputs[m.id]?.a === ''}>
                     Score
                   </Button>
                 </div>
