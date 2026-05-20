@@ -100,6 +100,22 @@ export default function AdminMatchesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
   })
 
+  const lockMatch = useMutation({
+    mutationFn: async (matchId: string) => {
+      const { error } = await supabase.from('matches').update({ status: 'locked' }).eq('id', matchId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+  })
+
+  const unlockMatch = useMutation({
+    mutationFn: async (matchId: string) => {
+      const { error } = await supabase.from('matches').update({ status: 'upcoming', home_score: null, away_score: null }).eq('id', matchId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
+  })
+
   const deleteMatch = useMutation({
     mutationFn: async (matchId: string) => {
       await supabase.from('predictions').delete().eq('match_id', matchId)
@@ -108,7 +124,8 @@ export default function AdminMatchesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),
   })
 
-  const [resultInputs, setResultInputs] = useState<Record<string, { h: string; a: string }>>({})
+  const [scoreInputs, setScoreInputs] = useState<Record<string, { h: string; a: string }>>({})
+  const [editingScore, setEditingScore] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   if (isLoading) return <LoadingSpinner />
@@ -210,7 +227,12 @@ export default function AdminMatchesPage() {
       )}
 
       <div className="space-y-2">
-        {matches?.map(m => (
+        {matches?.map(m => {
+          const isEditingThis = editingScore === m.id
+          const editH = isEditingThis ? scoreInputs[m.id]?.h ?? String(m.home_score ?? '') : ''
+          const editA = isEditingThis ? scoreInputs[m.id]?.a ?? String(m.away_score ?? '') : ''
+
+          return (
           <div key={m.id} className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-text-muted">{m.league?.name} — {m.stage}</span>
@@ -220,6 +242,16 @@ export default function AdminMatchesPage() {
                   m.status === 'locked' ? 'bg-warning/10 text-warning border border-warning/20' :
                   'bg-success/10 text-success border border-success/20'
                 }`}>{m.status}</span>
+                {m.status === 'upcoming' && (
+                  <Button size="sm" variant="ghost" className="text-[10px] px-1.5 py-0.5 h-auto rounded-lg text-warning" onClick={() => lockMatch.mutate(m.id)} disabled={lockMatch.isPending}>
+                    🔒
+                  </Button>
+                )}
+                {m.status === 'locked' && (
+                  <Button size="sm" variant="ghost" className="text-[10px] px-1.5 py-0.5 h-auto rounded-lg text-text-muted" onClick={() => unlockMatch.mutate(m.id)} disabled={unlockMatch.isPending}>
+                    🔓
+                  </Button>
+                )}
                 <button className="text-xs text-danger hover:text-red-400" onClick={() => setConfirmDelete(m.id)} title="Delete match">🗑️</button>
               </div>
             </div>
@@ -228,9 +260,9 @@ export default function AdminMatchesPage() {
                 {m.home_team?.flag_url && <img src={m.home_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
                 <span className="font-semibold text-sm text-text truncate">{m.home_team?.name}</span>
               </div>
-              {m.status === 'finished' && m.home_score !== null && m.away_score !== null ? (
+              {m.status === 'finished' && m.home_score !== null && m.away_score !== null && !isEditingThis ? (
                 <span className="font-bold text-primary text-lg shrink-0">{m.home_score} - {m.away_score}</span>
-              ) : m.status === 'locked' ? (
+              ) : m.status === 'locked' && !isEditingThis ? (
                 <span className="text-text-muted text-sm shrink-0">— : —</span>
               ) : (
                 <span className="text-text-muted text-xs shrink-0">{formatDateTime(m.kickoff_at)}</span>
@@ -242,23 +274,50 @@ export default function AdminMatchesPage() {
             </div>
             <div className="flex items-center gap-3 text-xs text-text-muted">
               <span className="bg-surface-alt px-2 py-0.5 rounded text-[10px]">E:{m.pts_exact} R:{m.pts_result} W:{m.pts_win}</span>
-              {m.status === 'locked' && (
+              {m.status === 'locked' && !isEditingThis && (
                 <div className="flex items-center gap-1 ml-auto">
                   <input type="number" min="0" max="99" className="w-10 h-8 text-center bg-surface-alt border border-border/50 rounded-lg text-sm text-text outline-none focus:border-primary transition-colors" placeholder="H"
-                    value={resultInputs[m.id]?.h ?? ''} onChange={e => setResultInputs(r => ({ ...r, [m.id]: { ...r[m.id], h: e.target.value } }))} />
+                    value={scoreInputs[m.id]?.h ?? ''} onChange={e => setScoreInputs(r => ({ ...r, [m.id]: { ...r[m.id], h: e.target.value } }))} />
                   <span className="text-text-muted">:</span>
                   <input type="number" min="0" max="99" className="w-10 h-8 text-center bg-surface-alt border border-border/50 rounded-lg text-sm text-text outline-none focus:border-primary transition-colors" placeholder="A"
-                    value={resultInputs[m.id]?.a ?? ''} onChange={e => setResultInputs(r => ({ ...r, [m.id]: { ...r[m.id], a: e.target.value } }))} />
+                    value={scoreInputs[m.id]?.a ?? ''} onChange={e => setScoreInputs(r => ({ ...r, [m.id]: { ...r[m.id], a: e.target.value } }))} />
                   <Button size="sm" variant="primary" className="rounded-lg"
-                    onClick={() => enterResult.mutate({ matchId: m.id, homeScore: Number(resultInputs[m.id]?.h), awayScore: Number(resultInputs[m.id]?.a) })}
-                    disabled={!resultInputs[m.id]?.h || !resultInputs[m.id]?.a}>
+                    onClick={() => enterResult.mutate({ matchId: m.id, homeScore: Number(scoreInputs[m.id]?.h), awayScore: Number(scoreInputs[m.id]?.a) })}
+                    disabled={!scoreInputs[m.id]?.h || !scoreInputs[m.id]?.a}>
                     Score
                   </Button>
                 </div>
               )}
+              {m.status === 'finished' && !isEditingThis && (
+                <Button size="sm" variant="ghost" className="rounded-lg ml-auto text-[10px] px-2 h-auto" onClick={() => {
+                  setEditingScore(m.id)
+                  setScoreInputs(r => ({ ...r, [m.id]: { h: String(m.home_score ?? ''), a: String(m.away_score ?? '') } }))
+                }}>
+                  Edit score
+                </Button>
+              )}
+              {isEditingThis && (
+                <div className="flex items-center gap-1 ml-auto">
+                  <input type="number" min="0" max="99" className="w-10 h-8 text-center bg-surface-alt border border-primary/50 rounded-lg text-sm text-text outline-none focus:border-primary transition-colors" placeholder="H"
+                    value={editH} onChange={e => setScoreInputs(r => ({ ...r, [m.id]: { ...r[m.id], h: e.target.value } }))} />
+                  <span className="text-text-muted">:</span>
+                  <input type="number" min="0" max="99" className="w-10 h-8 text-center bg-surface-alt border border-primary/50 rounded-lg text-sm text-text outline-none focus:border-primary transition-colors" placeholder="A"
+                    value={editA} onChange={e => setScoreInputs(r => ({ ...r, [m.id]: { ...r[m.id], a: e.target.value } }))} />
+                  <Button size="sm" variant="primary" className="rounded-lg"
+                    onClick={() => {
+                      enterResult.mutate({ matchId: m.id, homeScore: Number(scoreInputs[m.id]?.h), awayScore: Number(scoreInputs[m.id]?.a) })
+                      setEditingScore(null)
+                    }}
+                    disabled={!scoreInputs[m.id]?.h || !scoreInputs[m.id]?.a}>
+                    Save
+                  </Button>
+                  <Button size="sm" variant="ghost" className="rounded-lg" onClick={() => setEditingScore(null)}>Cancel</Button>
+                </div>
+              )}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
       </div>
     </div>
