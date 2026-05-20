@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { supabase } from '../lib/supabase'
@@ -283,7 +284,14 @@ export default function LeaderboardPage() {
                         )}
                       </span>
                     </td>
-                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 font-semibold text-text truncate">{entry.name}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 font-semibold text-text truncate">
+                      <Link to={`/player/${entry.id}`} className="hover:text-primary transition-colors">
+                        {entry.name}
+                      </Link>
+                      {entry.streak !== undefined && entry.streak >= 2 && (
+                        <span className="ml-1 text-warning text-xs" title={`${entry.streak} correct in a row`}>🔥</span>
+                      )}
+                    </td>
                     <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
                     <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>
                   </tr>

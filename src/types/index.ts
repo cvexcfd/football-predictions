@@ -118,6 +118,7 @@ export interface LeaderboardEntry {
   badge_count: number
   predictions_count: number
   rankDelta?: number
+  streak?: number
 }
 
 export interface MatchHistoryEntry {
