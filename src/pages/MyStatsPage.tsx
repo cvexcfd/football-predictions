@@ -101,29 +101,22 @@ export default function MyStatsPage() {
       )}
 
       <div className="glass rounded-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border/50">
+        <div className="px-3 py-2.5 border-b border-border/50">
           <h2 className="font-semibold text-sm text-text">Prediction History</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/50">
-              <th className="px-4 py-2.5 text-left font-semibold text-text-muted text-xs">Match</th>
-              <th className="px-4 py-2.5 text-right font-semibold text-text-muted text-xs">Pts</th>
-              <th className="px-4 py-2.5 text-right font-semibold text-text-muted text-xs hidden sm:table-cell">Badge</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.pointsPerMatch.slice(-30).reverse().map((ppm, i) => (
-              <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors">
-                <td className="px-4 py-2.5 text-text-muted truncate max-w-[200px] text-xs">{ppm.match}</td>
-                <td className={`px-4 py-2.5 text-right font-bold ${ppm.points > 0 ? 'text-success' : 'text-text-dim'}`}>
+        <div className="divide-y divide-border/50 max-h-[400px] overflow-y-auto">
+          {stats.pointsPerMatch.slice(-30).reverse().map((ppm, i) => (
+            <div key={i} className="flex items-center justify-between px-3 py-2 hover:bg-surface-alt/50 transition-colors text-xs">
+              <span className="text-text-muted truncate min-w-0 flex-1 pr-2">{ppm.match}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-text-dim text-[10px] bg-surface-alt px-1.5 py-0.5 rounded">{ppm.predScore}</span>
+                <span className={`font-bold ${ppm.points > 0 ? 'text-success' : 'text-text-dim'}`}>
                   {ppm.points > 0 ? `+${ppm.points}` : '0'}
-                </td>
-                <td className="px-4 py-2.5 text-right text-text-muted text-xs hidden sm:table-cell">{ppm.badgeUsed || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

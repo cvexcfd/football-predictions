@@ -271,11 +271,7 @@ export default function LeaderboardPage() {
                   <tr key={entry.id} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors animate-rank-enter" style={{ animationDelay: `${i * 40}ms` }}>
                     <td className="px-2 sm:px-4 py-3 sm:py-3.5 font-bold">
                       {i === 0 ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gold/20 rounded-full text-xs sm:text-sm shrink-0">🥇</span>
-                      ) : i === 1 ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-surface-alt rounded-full text-xs sm:text-sm shrink-0">🥈</span>
-                      ) : i === 2 ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gold/10 rounded-full text-xs sm:text-sm shrink-0">🥉</span>
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gold/20 rounded-full text-xs sm:text-sm shrink-0">👑</span>
                       ) : (
                         <span className="text-text-muted text-xs">#{i + 1}</span>
                       )}
