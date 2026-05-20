@@ -68,6 +68,7 @@ export default function AdminBadgesPage() {
 
   const deleteBadge = useMutation({
     mutationFn: async (badgeId: string) => {
+      await supabase.from('predictions').update({ badge_id_used: null }).eq('badge_id_used', badgeId)
       await supabase.from('player_badges').delete().eq('badge_id', badgeId)
       await supabase.from('badges').delete().eq('id', badgeId)
     },

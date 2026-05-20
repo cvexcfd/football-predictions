@@ -249,41 +249,43 @@ export default function LeaderboardPage() {
           <div className="text-center py-12 text-text-muted">No players yet</div>
         ) : (
           <div className="glass rounded-2xl overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
               <thead>
                 <tr className="border-b border-border/50">
-                  <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">#</th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">Player</th>
-                  <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs">Points</th>
-                  <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs hidden sm:table-cell">Badges</th>
+                  <th className="px-2 sm:px-4 py-3 text-left font-semibold text-text-muted text-xs w-14 sm:w-auto">#</th>
+                  <th className="px-2 sm:px-4 py-3 text-left font-semibold text-text-muted text-xs">Player</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-semibold text-text-muted text-xs w-16 sm:w-auto">Pts</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-semibold text-text-muted text-xs w-16 hidden sm:table-cell">Badges</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboard.map((entry, i) => (
                   <tr key={entry.id} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors animate-rank-enter" style={{ animationDelay: `${i * 40}ms` }}>
-                    <td className="px-4 py-3.5 font-bold w-10">
+                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 font-bold">
                       {i === 0 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-gold/20 rounded-full text-sm">🥇</span>
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gold/20 rounded-full text-xs sm:text-sm shrink-0">🥇</span>
                       ) : i === 1 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-surface-alt rounded-full text-sm">🥈</span>
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-surface-alt rounded-full text-xs sm:text-sm shrink-0">🥈</span>
                       ) : i === 2 ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 bg-gold/10 rounded-full text-sm">🥉</span>
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-gold/10 rounded-full text-xs sm:text-sm shrink-0">🥉</span>
                       ) : (
                         <span className="text-text-muted text-xs">#{i + 1}</span>
                       )}
-                      {entry.rankDelta !== undefined && entry.rankDelta > 0 && (
-                        <span className="ml-1 text-success text-[10px] leading-none" title={`+${entry.rankDelta}`}>▲</span>
-                      )}
-                      {entry.rankDelta !== undefined && entry.rankDelta < 0 && (
-                        <span className="ml-1 text-danger text-[10px] leading-none" title={`${entry.rankDelta}`}>▼</span>
-                      )}
-                      {entry.rankDelta !== undefined && entry.rankDelta === 0 && (
-                        <span className="ml-1 text-text-dim text-[10px] leading-none">—</span>
-                      )}
+                      <span className="ml-0.5">
+                        {entry.rankDelta !== undefined && entry.rankDelta > 0 && (
+                          <span className="text-success text-[9px] sm:text-[10px] leading-none" title={`+${entry.rankDelta}`}>▲</span>
+                        )}
+                        {entry.rankDelta !== undefined && entry.rankDelta < 0 && (
+                          <span className="text-danger text-[9px] sm:text-[10px] leading-none" title={`${entry.rankDelta}`}>▼</span>
+                        )}
+                        {entry.rankDelta !== undefined && entry.rankDelta === 0 && (
+                          <span className="text-text-dim text-[9px] sm:text-[10px] leading-none">—</span>
+                        )}
+                      </span>
                     </td>
-                    <td className="px-4 py-3.5 font-semibold text-text">{entry.name}</td>
-                    <td className="px-4 py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
-                    <td className="px-4 py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 font-semibold text-text truncate">{entry.name}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
+                    <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>
                   </tr>
                 ))}
               </tbody>
