@@ -13,6 +13,7 @@ import ResultsPage from './pages/ResultsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import BadgesPage from './pages/BadgesPage'
 import PlayerPage from './pages/PlayerPage'
+import ComparePage from './pages/ComparePage'
 
 import AdminDashboard from './admin/DashboardPage'
 import AdminLeaguesPage from './admin/LeaguesPage'
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/my-stats" element={<ProtectedRoute><PlayerLayout><MyStatsPage /></PlayerLayout></ProtectedRoute>} />
             <Route path="/badges" element={<ProtectedRoute><PlayerLayout><BadgesPage /></PlayerLayout></ProtectedRoute>} />
             <Route path="/player/:playerId" element={<ProtectedRoute><PlayerLayout><PlayerPage /></PlayerLayout></ProtectedRoute>} />
+            <Route path="/compare" element={<ProtectedRoute><PlayerLayout><ComparePage /></PlayerLayout></ProtectedRoute>} />
 
             <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
             <Route path="/admin/leagues" element={<AdminRoute><AdminLayout><AdminLeaguesPage /></AdminLayout></AdminRoute>} />

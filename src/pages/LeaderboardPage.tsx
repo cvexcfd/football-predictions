@@ -177,11 +177,18 @@ export default function LeaderboardPage() {
   return (
     <div className="pb-20 max-w-3xl mx-auto">
       <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
-        <h1 className="text-lg font-semibold text-text">World Cup 2026</h1>
-        <p className="text-2xl font-bold mt-1 text-text">Leaderboard</p>
-        <p className="text-sm text-text-muted mt-1">
-          {leaderboard ? `${leaderboard.length} players` : 'Rankings'}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-text">World Cup 2026</h1>
+            <p className="text-2xl font-bold mt-1 text-text">Leaderboard</p>
+            <p className="text-sm text-text-muted mt-1">
+              {leaderboard ? `${leaderboard.length} players` : 'Rankings'}
+            </p>
+          </div>
+          <Link to="/compare" className="text-xs font-medium text-primary hover:text-primary-light transition-colors bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
+            Compare
+          </Link>
+        </div>
       </div>
 
       <div className="px-4">
