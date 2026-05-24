@@ -123,7 +123,8 @@ function Comparison({ p1Id, p2Id }: { p1Id: string; p2Id: string }) {
           p1: { predHome: a.predHome, predAway: a.predAway, pts: a.pts, badge: a.badge },
           p2: { predHome: b.predHome, predAway: b.predAway, pts: b.pts, badge: b.badge },
         } as CommonMatch
-      }).sort((a, b) => {
+      }).filter(c => c.match?.status === 'locked' || c.match?.status === 'finished')
+      .sort((a, b) => {
         const da = a.match?.kickoff_at ?? ''
         const db = b.match?.kickoff_at ?? ''
         return db.localeCompare(da)

@@ -170,11 +170,14 @@ export default function PlayerPage() {
           Prediction History
         </h2>
 
+        {(() => {
+          const visiblePreds = (predictions ?? []).filter(p => p.match?.status === 'locked' || p.match?.status === 'finished')
+          return (
         <div className="space-y-2">
-          {predictions?.length === 0 && (
+          {visiblePreds.length === 0 && (
             <div className="text-center py-8 text-text-muted text-sm">No predictions yet</div>
           )}
-          {predictions?.map(p => {
+          {visiblePreds.map(p => {
             const match = p.match
             const isFinished = match?.status === 'finished'
             const isCorrect = isFinished && p.pts_total > 0
@@ -243,6 +246,7 @@ export default function PlayerPage() {
             )
           })}
         </div>
+        )})()}
       </div>
     </div>
   )
