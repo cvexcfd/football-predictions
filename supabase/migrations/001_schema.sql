@@ -361,6 +361,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Delete player with full cascade
+CREATE OR REPLACE FUNCTION delete_player_cascade(p_player_id uuid)
+RETURNS void AS $$
+BEGIN
+  DELETE FROM prediction_audit_log WHERE prediction_id IN (SELECT id FROM predictions WHERE player_id = p_player_id);
+  DELETE FROM predictions WHERE player_id = p_player_id;
+  DELETE FROM player_badges WHERE player_id = p_player_id;
+  DELETE FROM players WHERE id = p_player_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Login helper (used client-side via RPC)
 CREATE OR REPLACE FUNCTION login_by_code(p_code text) RETURNS SETOF players AS $$
 BEGIN

@@ -44,14 +44,15 @@ export default function AdminPlayersPage() {
 
   const deletePlayer = useMutation({
     mutationFn: async (playerId: string) => {
-      await supabase.from('predictions').delete().eq('player_id', playerId)
-      await supabase.from('player_badges').delete().eq('player_id', playerId)
-      await supabase.from('players').delete().eq('id', playerId)
+      await supabase.rpc('delete_player_cascade', { p_player_id: playerId })
     },
     onSuccess: () => {
       setConfirmDelete(null)
       qc.invalidateQueries({ queryKey: ['admin-players'] })
       qc.invalidateQueries({ queryKey: ['admin-badge-counts'] })
+    },
+    onError: (err: Error) => {
+      console.error('Delete failed:', err)
     },
   })
 
