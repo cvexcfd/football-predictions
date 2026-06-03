@@ -13,18 +13,15 @@ export function getResultIcon(predResult: string | undefined, predHome: number, 
 }
 
 export function formatDateTime(utc: string): string {
-  const d = new Date(utc)
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(utc).toLocaleDateString('en-US', { timeZone: 'Africa/Casablanca', weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDate(utc: string): string {
-  const d = new Date(utc)
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return new Date(utc).toLocaleDateString('en-US', { timeZone: 'Africa/Casablanca', weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 export function formatTime(utc: string): string {
-  const d = new Date(utc)
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  return new Date(utc).toLocaleTimeString('en-US', { timeZone: 'Africa/Casablanca', hour: '2-digit', minute: '2-digit' })
 }
 
 export function isMatchUpcoming(kickoffAt: string): boolean {

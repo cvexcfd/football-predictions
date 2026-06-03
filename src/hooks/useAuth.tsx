@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const stored = sessionStorage.getItem('player')
+      const stored = localStorage.getItem('player')
       if (stored) {
         try {
           const parsed = JSON.parse(stored)
@@ -26,10 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data) {
             setPlayer(parsed)
           } else {
-            sessionStorage.removeItem('player')
+            localStorage.removeItem('player')
           }
         } catch {
-          sessionStorage.removeItem('player')
+          localStorage.removeItem('player')
         }
       }
       setIsLoading(false)
@@ -48,13 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setPlayer(data as Player)
-    sessionStorage.setItem('player', JSON.stringify(data))
+    localStorage.setItem('player', JSON.stringify(data))
     return {}
   }, [])
 
   const logout = useCallback(async () => {
     setPlayer(null)
-    sessionStorage.removeItem('player')
+    localStorage.removeItem('player')
   }, [])
 
   return (

@@ -21,6 +21,7 @@ import AdminMatchesPage from './admin/MatchesPage'
 import AdminBadgesPage from './admin/BadgesPage'
 import AdminPlayersPage from './admin/PlayersPage'
 import AdminAuditPage from './admin/AuditPage'
+import AdminHealthPage from './admin/HealthPage'
 import AdminImportPage from './admin/ImportPage'
 
 const queryClient = new QueryClient()
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/admin/players" element={<AdminRoute><AdminLayout><AdminPlayersPage /></AdminLayout></AdminRoute>} />
             <Route path="/admin/import" element={<AdminRoute><AdminLayout><AdminImportPage /></AdminLayout></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AdminLayout><AdminAuditPage /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/health" element={<AdminRoute><AdminLayout><AdminHealthPage /></AdminLayout></AdminRoute>} />
           </Routes>
         </BrowserRouter>
         </ToastProvider>

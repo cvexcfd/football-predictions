@@ -21,10 +21,34 @@ export function MatchCard({ match, index = 0 }: Props) {
   const [predAway, setPredAway] = useState(match.prediction?.pred_away ?? '')
   const [selectedBadge, setSelectedBadge] = useState(match.prediction?.badge_id_used ?? '')
 
-  const upcoming = match.status === 'upcoming' && isMatchUpcoming(match.kickoff_at)
-  const locked = match.status === 'locked' || match.status === 'finished'
-  const finished = match.status === 'finished'
-  const isLive = !finished && match.status === 'locked' && new Date(match.kickoff_at).getTime() > Date.now() - 130 * 60 * 1000
+  const now = new Date()
+  const kickoff = new Date(match.kickoff_at)
+  const diffToKickoff = kickoff.getTime() - now.getTime()
+
+  // Determine match status for UI
+  let upcoming = false
+  let locked = false
+  let finished = match.status === 'finished'
+  let isLiveMatch = false
+
+  if (match.status === 'upcoming') {
+    // More than 2 hours until kickoff: upcoming (predictions open)
+    if (diffToKickoff > 2 * 60 * 60 * 1000) {
+      upcoming = true
+    }
+    // Within 2 hours before kickoff: locked (predictions closed)
+    else if (diffToKickoff >= 0 && diffToKickoff <= 2 * 60 * 60 * 1000) {
+      locked = true
+    }
+    // Kickoff in the past but status still upcoming: treat as locked (shouldn't happen with cron)
+    else if (diffToKickoff < 0) {
+      locked = true
+    }
+  } else if (match.status === 'locked') {
+    locked = true
+    // Check if in progress (first 2 hours after kickoff)
+    isLiveMatch = now.getTime() >= kickoff.getTime() && now.getTime() < kickoff.getTime() + 2 * 60 * 60 * 1000
+  }
 
   const handleSubmit = async () => {
     if (!player || predHome === '' || predAway === '') return
@@ -63,26 +87,26 @@ export function MatchCard({ match, index = 0 }: Props) {
       className="glass rounded-2xl p-4 hover:border-border-light transition-all duration-300 animate-fade-in"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      {/* Top row: stage + status + time */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {match.stage && (
-            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-surface-alt px-2 py-0.5 rounded-full">
-              {match.stage}
-            </span>
-          )}
-          {upcoming && <Badge variant="primary">OPEN</Badge>}
-          {isLive && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
-              <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse-dot" />
-              LIVE
-            </span>
-          )}
-          {locked && !finished && !isLive && <Badge variant="warning">LOCKED</Badge>}
-          {finished && <Badge variant="default">FINISHED</Badge>}
-        </div>
-        <span className="text-[11px] text-text-dim font-medium">{formatDateTime(match.kickoff_at)}</span>
-      </div>
+       {/* Top row: stage + status + time */}
+       <div className="flex items-center justify-between mb-3">
+         <div className="flex items-center gap-2">
+           {match.stage && (
+             <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-surface-alt px-2 py-0.5 rounded-full">
+               {match.stage}
+             </span>
+           )}
+           {upcoming && <Badge variant="primary">OPEN</Badge>}
+           {locked && isLiveMatch && (
+             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+               <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse-dot" />
+               LIVE
+             </span>
+           )}
+           {locked && !isLiveMatch && <Badge variant="warning">LOCKED</Badge>}
+           {finished && <Badge variant="default">FINISHED</Badge>}
+         </div>
+         <span className="text-[11px] text-text-dim font-medium">{formatDateTime(match.kickoff_at)}</span>
+       </div>
 
       {/* Teams vs divider */}
       <div className="flex items-center justify-between my-4">

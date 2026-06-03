@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { Button, Input, LoadingSpinner } from '../components/ui'
 import { generateAccessCode } from '../lib/utils'
+import { useToast } from '../components/Toast'
 
 export default function AdminPlayersPage() {
   const qc = useQueryClient()
   const [name, setName] = useState('')
   const [newCode, setNewCode] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const { data: players, isLoading } = useQuery({
     queryKey: ['admin-players'],
@@ -28,6 +30,28 @@ export default function AdminPlayersPage() {
     },
   })
 
+  const [modifyPlayerId, setModifyPlayerId] = useState('')
+  const [modifyPoints, setModifyPoints] = useState('')
+
+  const updatePlayerPoints = useMutation({
+    mutationFn: async ({ playerId, points }: { playerId: string; points: number }) => {
+      const { error } = await supabase
+        .from('players')
+        .update({ total_points: points })
+        .eq('id', playerId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setModifyPlayerId('')
+      setModifyPoints('')
+      qc.invalidateQueries({ queryKey: ['admin-players'] })
+      toast('Points updated', 'success')
+    },
+    onError: (err: Error) => {
+      toast(`Failed: ${err.message}`, 'error')
+    },
+  })
+
   const createPlayer = useMutation({
     mutationFn: async () => {
       const code = generateAccessCode()
@@ -44,30 +68,48 @@ export default function AdminPlayersPage() {
 
   const deletePlayer = useMutation({
     mutationFn: async (playerId: string) => {
-      await supabase.rpc('delete_player_cascade', { p_player_id: playerId })
+      const { error } = await supabase.rpc('delete_player_cascade', { p_player_id: playerId })
+      if (error) throw error
     },
     onSuccess: () => {
       setConfirmDelete(null)
       qc.invalidateQueries({ queryKey: ['admin-players'] })
       qc.invalidateQueries({ queryKey: ['admin-badge-counts'] })
+      toast('Player deleted', 'success')
     },
     onError: (err: Error) => {
-      console.error('Delete failed:', err)
+      toast(`Delete failed: ${err.message}`, 'error')
     },
   })
 
-  const resetCode = useMutation({
-    mutationFn: async (playerId: string) => {
-      const code = generateAccessCode()
-      const { error } = await supabase.from('players').update({ access_code: code }).eq('id', playerId)
-      if (error) throw error
-      return code
-    },
-    onSuccess: (code, playerId) => {
-      setNewCode(`${players?.find(p => p.id === playerId)?.name}: ${code}`)
-      qc.invalidateQueries({ queryKey: ['admin-players'] })
-    },
-  })
+   const resetCode = useMutation({
+     mutationFn: async (playerId: string) => {
+       const code = generateAccessCode()
+       const { error } = await supabase.from('players').update({ access_code: code }).eq('id', playerId)
+       if (error) throw error
+       return code
+     },
+     onSuccess: (code, playerId) => {
+       setNewCode(`${players?.find(p => p.id === playerId)?.name}: ${code}`)
+       qc.invalidateQueries({ queryKey: ['admin-players'] })
+     },
+   })
+
+   const [resetPlayerId, setResetPlayerId] = useState('')
+   const resetPlayerPoints = useMutation({
+     mutationFn: async (playerId: string) => {
+       const { error } = await supabase.from('players').update({ total_points: 0 }).eq('id', playerId)
+       if (error) throw error
+     },
+     onSuccess: () => {
+       setResetPlayerId('')
+       qc.invalidateQueries({ queryKey: ['admin-players'] })
+       toast('Player points reset to zero', 'success')
+     },
+     onError: (err: Error) => {
+       toast(`Failed to reset points: ${err.message}`, 'error')
+     },
+   })
 
   if (isLoading) return <LoadingSpinner />
 
@@ -78,9 +120,9 @@ export default function AdminPlayersPage() {
         <p className="text-2xl font-bold mt-1 text-text">Players</p>
       </div>
 
-      <div className="px-4">
+      <div className="px-4 space-y-4">
         {newCode && (
-          <div className="bg-success/10 border border-success/30 rounded-2xl p-5 mb-4 animate-fade-in">
+          <div className="bg-success/10 border border-success/30 rounded-2xl p-5 animate-fade-in">
             <div className="font-semibold text-success mb-1">Access Code</div>
             <div className="text-sm text-text font-mono">{newCode}</div>
             <button className="text-xs text-text-muted mt-2 underline" onClick={() => setNewCode(null)}>Dismiss</button>
@@ -88,7 +130,7 @@ export default function AdminPlayersPage() {
         )}
 
         {confirmDelete && (
-          <div className="bg-danger/10 border border-danger/30 rounded-2xl p-5 mb-4 animate-fade-in">
+          <div className="bg-danger/10 border border-danger/30 rounded-2xl p-5 animate-fade-in">
             <div className="font-semibold text-danger mb-1">Delete Player?</div>
             <div className="text-sm text-text-muted mb-3">This will also remove all predictions and badges for this player. This cannot be undone.</div>
             <div className="flex gap-2">
@@ -100,7 +142,7 @@ export default function AdminPlayersPage() {
           </div>
         )}
 
-        <div className="glass rounded-2xl p-4 mb-4">
+        <div className="glass rounded-2xl p-4">
           <h2 className="font-semibold text-sm text-text mb-3">Add Player</h2>
           <div className="flex gap-2">
             <Input placeholder="Player name" value={name} onChange={e => setName(e.target.value)} />
@@ -110,36 +152,65 @@ export default function AdminPlayersPage() {
           </div>
         </div>
 
-        <div className="glass rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">Name</th>
-                <th className="px-4 py-3 text-left font-semibold text-text-muted text-xs">Code</th>
-                <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs">Points</th>
-                <th className="px-4 py-3 text-right font-semibold text-text-muted text-xs">Badges</th>
-                <th className="px-4 py-3 text-center font-semibold text-text-muted text-xs">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="glass rounded-2xl p-4">
+          <h2 className="font-semibold text-sm text-text mb-3">Modify Player Points</h2>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <select className="flex-1 px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none appearance-none"
+                value={modifyPlayerId} onChange={e => setModifyPlayerId(e.target.value)}>
+                <option value="">Select player...</option>
+                {players?.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.total_points} pts)</option>
+                ))}
+              </select>
+              <input type="number" min="0" step="1" placeholder="Points"
+                className="w-24 px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none"
+                value={modifyPoints} onChange={e => setModifyPoints(e.target.value)} />
+            </div>
+            <Button variant="primary"
+              onClick={() => updatePlayerPoints.mutate({ playerId: modifyPlayerId, points: Number(modifyPoints) })}
+              disabled={!modifyPlayerId || !modifyPoints || modifyPoints === '' || updatePlayerPoints.isPending}>
+              {updatePlayerPoints.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="glass rounded-2xl p-4">
+          <h2 className="font-semibold text-sm text-text mb-3">Reset Player Points</h2>
+          <div className="flex flex-col gap-2">
+            <select className="w-full px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none appearance-none"
+              value={resetPlayerId} onChange={e => setResetPlayerId(e.target.value)}>
+              <option value="">Select player...</option>
               {players?.map(p => (
-                <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-surface-alt/50 transition-colors">
-                  <td className="px-4 py-3.5 font-semibold text-text">{p.name}{p.is_admin ? <span className="ml-1 text-xs" title="Admin">👑</span> : ''}</td>
-                  <td className="px-4 py-3.5 font-mono text-text-muted text-xs">{p.access_code}</td>
-                  <td className="px-4 py-3.5 text-right font-bold text-primary">{p.total_points}</td>
-                  <td className="px-4 py-3.5 text-right text-text-muted">{badgeCounts?.get(p.id) ?? 0}</td>
-                  <td className="px-4 py-3.5 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button className="text-xs text-primary underline hover:text-primary-dark" onClick={() => resetCode.mutate(p.id)} disabled={resetCode.isPending} title="Reset code">🔑</button>
-                      {!p.is_admin && (
-                        <button className="text-xs text-danger hover:text-red-400 disabled:opacity-50" onClick={() => setConfirmDelete(p.id)} title="Delete player">🗑️</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                <option key={p.id} value={p.id}>{p.name} ({p.total_points} pts)</option>
               ))}
-            </tbody>
-          </table>
+            </select>
+            <Button variant="danger"
+              onClick={() => resetPlayerPoints.mutate(resetPlayerId)}
+              disabled={!resetPlayerId || resetPlayerPoints.isPending}>
+              {resetPlayerPoints.isPending ? 'Resetting...' : '↺ Reset to Zero'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="font-semibold text-sm text-text px-1">All Players</h2>
+          {players?.map(p => (
+            <div key={p.id} className="glass rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-text">{p.name}{p.is_admin ? <span className="ml-1 text-xs" title="Admin">👑</span> : ''}</span>
+                <span className="ml-2 font-mono text-text-muted text-xs">{p.access_code}</span>
+                <span className="ml-3 font-bold text-primary">{p.total_points} pts</span>
+                <span className="ml-2 text-xs text-text-muted">{badgeCounts?.get(p.id) ?? 0} badges</span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button className="text-xs text-primary underline hover:text-primary-dark" onClick={() => resetCode.mutate(p.id)} disabled={resetCode.isPending} title="Reset code">🔑</button>
+                {!p.is_admin && (
+                  <button className="text-xs text-danger hover:text-red-400 disabled:opacity-50" onClick={() => setConfirmDelete(p.id)} title="Delete player">🗑️</button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

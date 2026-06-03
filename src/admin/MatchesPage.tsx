@@ -54,20 +54,32 @@ export default function AdminMatchesPage() {
   const [showAddTeam, setShowAddTeam] = useState(false)
   const [newTeam, setNewTeam] = useState({ name: '', code: '', flag_url: '' })
 
-  const createMatch = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('matches').insert({
-        ...form, pts_win: 0,
-        kickoff_at: new Date(form.kickoff_at).toISOString(),
-      })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      setShowForm(false)
-      setForm({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: 'Group Stage', pts_exact: 3, pts_result: 1 })
-      qc.invalidateQueries({ queryKey: ['admin-matches'] })
-    },
-  })
+   const createMatch = useMutation({
+     mutationFn: async () => {
+       // Validation: home and away team must be different
+       if (form.home_team_id === form.away_team_id) {
+         throw new Error('Home and away teams must be different')
+       }
+       
+       const { error } = await supabase.from('matches').insert({
+         ...form, pts_win: 0,
+         kickoff_at: new Date(form.kickoff_at).toISOString(),
+       })
+       if (error) throw error
+     },
+     onSuccess: () => {
+       setShowForm(false)
+       setForm({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: 'Group Stage', pts_exact: 3, pts_result: 1 })
+       // Auto-focus league select after successful creation
+       const leagueSelect = document.getElementById('league-select')
+       if (leagueSelect) leagueSelect.focus()
+       qc.invalidateQueries({ queryKey: ['admin-matches'] })
+       toast('Match created successfully', 'success')
+     },
+     onError: (err: Error) => {
+       toast(err.message, 'error')
+     },
+   })
 
   const addTeam = useMutation({
     mutationFn: async () => {
