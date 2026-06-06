@@ -294,6 +294,9 @@ export default function LeaderboardPage() {
                       {entry.streak !== undefined && entry.streak >= 2 && (
                         <span className="ml-1 text-warning text-xs" title={`${entry.streak} correct in a row`}>🔥</span>
                       )}
+                      {entry.badge_count > 0 && (
+                        <span className="ml-1.5 text-xs text-text-muted">⭐{entry.badge_count}</span>
+                      )}
                     </td>
                     <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right font-bold text-primary">{entry.total_points}</td>
                     <td className="px-2 sm:px-4 py-3 sm:py-3.5 text-right text-text-muted text-xs hidden sm:table-cell">{entry.badge_count}</td>

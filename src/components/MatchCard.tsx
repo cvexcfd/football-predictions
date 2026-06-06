@@ -32,12 +32,12 @@ export function MatchCard({ match, index = 0 }: Props) {
   let isLiveMatch = false
 
   if (match.status === 'upcoming') {
-    // More than 2 hours until kickoff: upcoming (predictions open)
-    if (diffToKickoff > 2 * 60 * 60 * 1000) {
+    // More than 30 minutes until kickoff: upcoming (predictions open)
+    if (diffToKickoff > 30 * 60 * 1000) {
       upcoming = true
     }
-    // Within 2 hours before kickoff: locked (predictions closed)
-    else if (diffToKickoff >= 0 && diffToKickoff <= 2 * 60 * 60 * 1000) {
+    // Within 30 minutes before kickoff: locked (predictions closed)
+    else if (diffToKickoff >= 0 && diffToKickoff <= 30 * 60 * 1000) {
       locked = true
     }
     // Kickoff in the past but status still upcoming: treat as locked (shouldn't happen with cron)

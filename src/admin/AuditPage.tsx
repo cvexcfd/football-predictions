@@ -1,9 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { LoadingSpinner } from '../components/ui'
+import { Button, Input, LoadingSpinner } from '../components/ui'
+import { useToast } from '../components/Toast'
 import { formatDateTime } from '../lib/utils'
 
 export default function AdminAuditPage() {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const [deleteDays, setDeleteDays] = useState(7)
+
   const { data: logs, isLoading } = useQuery({
     queryKey: ['audit-log'],
     queryFn: async () => {
@@ -30,6 +36,21 @@ export default function AdminAuditPage() {
     },
   })
 
+  const deleteOldLogs = useMutation({
+    mutationFn: async (days: number) => {
+      const { data, error } = await supabase.rpc('delete_old_audit_logs', { p_days: days })
+      if (error) throw error
+      return data
+    },
+    onSuccess: (count) => {
+      toast(`Deleted ${count} old log entries`, 'success')
+      qc.invalidateQueries({ queryKey: ['audit-log'] })
+    },
+    onError: (err: Error) => {
+      toast(err.message, 'error')
+    },
+  })
+
   if (isLoading) return <LoadingSpinner />
 
   return (
@@ -40,10 +61,28 @@ export default function AdminAuditPage() {
       </div>
 
       <div className="px-4">
-        <div className="glass rounded-2xl overflow-hidden">
+        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3">
+          <span className="text-sm text-text font-medium shrink-0">Delete old logs</span>
+          <Input
+            type="number" min="1" max="365"
+            className="w-20"
+            value={deleteDays}
+            onChange={e => setDeleteDays(Number(e.target.value))}
+          />
+          <span className="text-xs text-text-muted">days</span>
+          <Button
+            variant="danger" size="sm"
+            onClick={() => deleteOldLogs.mutate(deleteDays)}
+            disabled={deleteOldLogs.isPending || deleteDays < 1}
+          >
+            {deleteOldLogs.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </div>
+
+        <div className="glass rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/50">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border/50 bg-surface-alt">
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs">Player</th>
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs">Action</th>
                 <th className="px-3 py-2.5 text-left font-semibold text-text-muted text-xs hidden sm:table-cell">Match</th>

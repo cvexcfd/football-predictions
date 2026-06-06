@@ -162,11 +162,42 @@ export default function AdminMatchesPage() {
     onError: (err: Error) => toast(err.message, 'error'),
   })
 
+  const { data: predictionsByMatch } = useQuery({
+    queryKey: ['admin-match-predictions', matches?.map(m => m.id)],
+    queryFn: async () => {
+      if (!matches || matches.length === 0) return {}
+      const { data } = await supabase
+        .from('predictions')
+        .select('*, player:player_id(name)')
+        .in('match_id', matches.map(m => m.id))
+      const grouped: Record<string, Array<Record<string, unknown>>> = {}
+      for (const p of data ?? []) {
+        (grouped[p.match_id] ??= []).push(p)
+      }
+      return grouped
+    },
+    enabled: !!matches && matches.length > 0,
+  })
+
+  const updatePrediction = useMutation({
+    mutationFn: async ({ matchId, playerId, predHome, predAway }: { matchId: string; playerId: string; predHome: number; predAway: number }) => {
+      const { error } = await supabase.from('predictions').update({ pred_home: predHome, pred_away: predAway }).eq('match_id', matchId).eq('player_id', playerId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast('Prediction updated', 'success')
+      qc.invalidateQueries({ queryKey: ['admin-matches'] })
+      qc.invalidateQueries({ queryKey: ['admin-match-predictions'] })
+    },
+    onError: (err: Error) => toast(err.message, 'error'),
+  })
+
   const [scoreInputs, setScoreInputs] = useState<Record<string, { h: string; a: string }>>({})
   const [editingScore, setEditingScore] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [editingMatch, setEditingMatch] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ league_id: '', home_team_id: '', away_team_id: '', kickoff_at: '', stage: '', pts_exact: 3, pts_result: 1 })
+  const [editPrediction, setEditPrediction] = useState<Record<string, { playerId: string; h: string; a: string }>>({})
 
   const startEdit = (m: Record<string, unknown>) => {
     setEditingMatch(m.id as string)
@@ -406,6 +437,47 @@ export default function AdminMatchesPage() {
                 </div>
               )}
             </div>
+
+            {(m.status === 'locked' || m.status === 'finished') && predictionsByMatch?.[m.id] && predictionsByMatch[m.id].length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
+                <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">Predictions</div>
+                {predictionsByMatch[m.id].map((p: Record<string, unknown>) => {
+                  const isEditingPred = editPrediction[m.id]?.playerId === p.player_id
+                  return (
+                    <div key={p.id as string} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-surface-alt/50 transition-colors">
+                      <span className="font-medium text-text">{((p.player as { name?: string })?.name) ?? '?'}</span>
+                      {isEditingPred ? (
+                        <div className="flex items-center gap-1">
+                          <input type="number" min="0" max="99" className="w-9 h-7 text-center bg-surface-alt border border-primary/50 rounded-lg text-xs text-text outline-none"
+                            value={editPrediction[m.id]?.h ?? ''}
+                            onChange={e => setEditPrediction(ep => ({ ...ep, [m.id]: { ...ep[m.id], h: e.target.value, playerId: p.player_id as string } }))} />
+                          <span className="text-text-muted">:</span>
+                          <input type="number" min="0" max="99" className="w-9 h-7 text-center bg-surface-alt border border-primary/50 rounded-lg text-xs text-text outline-none"
+                            value={editPrediction[m.id]?.a ?? ''}
+                            onChange={e => setEditPrediction(ep => ({ ...ep, [m.id]: { ...ep[m.id], a: e.target.value, playerId: p.player_id as string } }))} />
+                          <Button size="sm" variant="primary" className="rounded-lg text-[10px] px-2 h-7"
+                            onClick={() => {
+                              updatePrediction.mutate({ matchId: m.id, playerId: p.player_id as string, predHome: Number(editPrediction[m.id]?.h), predAway: Number(editPrediction[m.id]?.a) })
+                              setEditPrediction(ep => { const n = { ...ep }; delete n[m.id]; return n })
+                            }}
+                            disabled={!editPrediction[m.id]?.h || !editPrediction[m.id]?.a}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" className="rounded-lg text-[10px] px-2 h-7" onClick={() => setEditPrediction(ep => { const n = { ...ep }; delete n[m.id]; return n })}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-text-dim">{(p as Record<string, unknown>).pred_home as number}-{(p as Record<string, unknown>).pred_away as number}</span>
+                          <button className="text-[10px] text-primary hover:text-primary-dark underline" onClick={() => setEditPrediction(ep => ({ ...ep, [m.id]: { playerId: p.player_id as string, h: String((p as Record<string, unknown>).pred_home ?? ''), a: String((p as Record<string, unknown>).pred_away ?? '') } }))}>
+                            Edit Prediction
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
           )
         })}

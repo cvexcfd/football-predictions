@@ -2,11 +2,17 @@ import { useAuth } from '../hooks/useAuth'
 import { useMatches } from '../hooks/useMatches'
 import { MatchCard } from '../components/MatchCard'
 import { EmptyState, SkeletonCard } from '../components/ui'
-import { groupBy } from '../lib/utils'
+import { groupBy, formatDateTime } from '../lib/utils'
 
 export default function MatchesPage() {
   const { player } = useAuth()
   const { data: matches, isLoading } = useMatches('upcoming', player?.id)
+
+  const nowMorocco = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Casablanca' })
+  const todayMatches = (matches ?? []).filter(m => {
+    const d = new Date(m.kickoff_at).toLocaleDateString('en-CA', { timeZone: 'Africa/Casablanca' })
+    return d === nowMorocco
+  })
 
   if (isLoading) {
     return (
@@ -58,6 +64,21 @@ export default function MatchesPage() {
         <p className="text-sm text-text-muted mt-1">{matchCount} match days</p>
       </div>
       <div className="px-4">
+        {todayMatches.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Today's Matches
+            </h2>
+            <div className="space-y-3">
+              {todayMatches.map((m, i) => (
+                <MatchCard key={m.id} match={m} index={i} />
+              ))}
+            </div>
+          </div>
+        )}
         {Object.entries(grouped).map(([date, dayMatches]) => (
           <div key={date} className="mb-6">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>

@@ -378,3 +378,14 @@ BEGIN
   RETURN QUERY SELECT * FROM players WHERE access_code = p_code LIMIT 1;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Delete old audit log entries (admin)
+CREATE OR REPLACE FUNCTION delete_old_audit_logs(p_days int DEFAULT 7)
+RETURNS int AS $$
+DECLARE v_count int;
+BEGIN
+  DELETE FROM prediction_audit_log WHERE changed_at < NOW() - (p_days || ' days')::INTERVAL;
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

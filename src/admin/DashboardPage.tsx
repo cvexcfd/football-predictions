@@ -80,6 +80,12 @@ export default function AdminDashboard() {
               <span className="text-primary">→</span>
             </div>
           </a>
+          <a href="/admin/bracket" className="block p-4 glass rounded-2xl hover:border-border-light transition-all duration-200 font-medium text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-text">Knockout Bracket</span>
+              <span className="text-primary">→</span>
+            </div>
+          </a>
           <a href="/admin/audit" className="block p-4 glass rounded-2xl hover:border-border-light transition-all duration-200 font-medium text-sm">
             <div className="flex items-center justify-between">
               <span className="text-text">Audit Log</span>
