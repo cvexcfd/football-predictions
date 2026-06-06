@@ -30,28 +30,6 @@ export default function AdminPlayersPage() {
     },
   })
 
-  const [modifyPlayerId, setModifyPlayerId] = useState('')
-  const [modifyPoints, setModifyPoints] = useState('')
-
-  const updatePlayerPoints = useMutation({
-    mutationFn: async ({ playerId, points }: { playerId: string; points: number }) => {
-      const { error } = await supabase
-        .from('players')
-        .update({ total_points: points })
-        .eq('id', playerId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      setModifyPlayerId('')
-      setModifyPoints('')
-      qc.invalidateQueries({ queryKey: ['admin-players'] })
-      toast('Points updated', 'success')
-    },
-    onError: (err: Error) => {
-      toast(`Failed: ${err.message}`, 'error')
-    },
-  })
-
   const createPlayer = useMutation({
     mutationFn: async () => {
       const code = generateAccessCode()
@@ -153,30 +131,8 @@ export default function AdminPlayersPage() {
         </div>
 
         <div className="glass rounded-2xl p-4">
-          <h2 className="font-semibold text-sm text-text mb-3">Modify Player Points</h2>
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2 items-center">
-              <select className="flex-1 px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none appearance-none"
-                value={modifyPlayerId} onChange={e => setModifyPlayerId(e.target.value)}>
-                <option value="">Select player...</option>
-                {players?.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.total_points} pts)</option>
-                ))}
-              </select>
-              <input type="number" min="0" step="1" placeholder="Points"
-                className="w-24 px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none"
-                value={modifyPoints} onChange={e => setModifyPoints(e.target.value)} />
-            </div>
-            <Button variant="primary"
-              onClick={() => updatePlayerPoints.mutate({ playerId: modifyPlayerId, points: Number(modifyPoints) })}
-              disabled={!modifyPlayerId || !modifyPoints || modifyPoints === '' || updatePlayerPoints.isPending}>
-              {updatePlayerPoints.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </div>
-
-        <div className="glass rounded-2xl p-4">
-          <h2 className="font-semibold text-sm text-text mb-3">Reset Player Points</h2>
+          <h2 className="font-semibold text-sm text-text mb-3">Reset Player Points to Zero</h2>
+          <p className="text-xs text-text-muted mb-2">This only resets total_points — it does not delete prediction records. Scoring a finished match recalculates points from predictions automatically.</p>
           <div className="flex flex-col gap-2">
             <select className="w-full px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none appearance-none"
               value={resetPlayerId} onChange={e => setResetPlayerId(e.target.value)}>
