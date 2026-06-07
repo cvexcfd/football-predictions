@@ -187,8 +187,8 @@ BEGIN
   IF v_match.status <> 'upcoming' THEN
     RAISE EXCEPTION 'Match is not open for predictions';
   END IF;
-  IF v_match.kickoff_at <= now() THEN
-    RAISE EXCEPTION 'Match has already kicked off';
+  IF v_match.kickoff_at - INTERVAL '30 minutes' <= now() THEN
+    RAISE EXCEPTION 'Match locks 30 minutes before kickoff';
   END IF;
 
   -- Get existing prediction if any
