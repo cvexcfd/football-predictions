@@ -155,6 +155,7 @@ export default function AdminMatchesPage() {
 
   const deleteMatch = useMutation({
     mutationFn: async (matchId: string) => {
+      await supabase.from('prediction_audit_log').delete().eq('match_id', matchId)
       await supabase.from('predictions').delete().eq('match_id', matchId)
       await supabase.from('matches').delete().eq('id', matchId)
     },

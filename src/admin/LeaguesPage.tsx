@@ -34,6 +34,7 @@ export default function AdminLeaguesPage() {
       const { data: matches } = await supabase.from('matches').select('id').eq('league_id', leagueId)
       if (matches && matches.length > 0) {
         const matchIds = matches.map(m => m.id)
+        await supabase.from('prediction_audit_log').delete().in('match_id', matchIds)
         await supabase.from('predictions').delete().in('match_id', matchIds)
         await supabase.from('matches').delete().in('id', matchIds)
       }

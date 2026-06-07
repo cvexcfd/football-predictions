@@ -76,16 +76,17 @@ export default function AdminPlayersPage() {
    const [resetPlayerId, setResetPlayerId] = useState('')
    const resetPlayerPoints = useMutation({
      mutationFn: async (playerId: string) => {
-       const { error } = await supabase.from('players').update({ total_points: 0 }).eq('id', playerId)
+       const { error } = await supabase.rpc('reset_player_cascade', { p_player_id: playerId })
        if (error) throw error
      },
      onSuccess: () => {
        setResetPlayerId('')
        qc.invalidateQueries({ queryKey: ['admin-players'] })
-       toast('Player points reset to zero', 'success')
+       qc.invalidateQueries({ queryKey: ['admin-badge-counts'] })
+       toast('Player reset — all history cleared', 'success')
      },
      onError: (err: Error) => {
-       toast(`Failed to reset points: ${err.message}`, 'error')
+       toast(`Failed to reset player: ${err.message}`, 'error')
      },
    })
 
@@ -132,7 +133,7 @@ export default function AdminPlayersPage() {
 
         <div className="glass rounded-2xl p-4">
           <h2 className="font-semibold text-sm text-text mb-3">Reset Player Points to Zero</h2>
-          <p className="text-xs text-text-muted mb-2">This only resets total_points — it does not delete prediction records. Scoring a finished match recalculates points from predictions automatically.</p>
+          <p className="text-xs text-text-muted mb-2">Deletes all predictions, badges, audit logs, and sets points to zero. The player account is kept.</p>
           <div className="flex flex-col gap-2">
             <select className="w-full px-3 py-2 bg-surface-alt border border-border/50 rounded-xl text-sm text-text outline-none appearance-none"
               value={resetPlayerId} onChange={e => setResetPlayerId(e.target.value)}>

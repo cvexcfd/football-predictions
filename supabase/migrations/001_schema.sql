@@ -389,3 +389,14 @@ BEGIN
   RETURN v_count;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Reset player: clear all history but keep account
+CREATE OR REPLACE FUNCTION reset_player_cascade(p_player_id uuid)
+RETURNS void AS $$
+BEGIN
+  DELETE FROM prediction_audit_log WHERE player_id = p_player_id;
+  DELETE FROM predictions WHERE player_id = p_player_id;
+  DELETE FROM player_badges WHERE player_id = p_player_id;
+  UPDATE players SET total_points = 0 WHERE id = p_player_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
