@@ -19,6 +19,7 @@ export function Navbar() {
             <>
               <a href="/admin" className="px-3 py-1.5 rounded-xl text-text-muted hover:text-text hover:bg-surface-alt transition-all duration-200">Dashboard</a>
               <a href="/admin/matches" className="px-3 py-1.5 rounded-xl text-text-muted hover:text-text hover:bg-surface-alt transition-all duration-200">Matches</a>
+              <a href="/admin/monitoring" className="px-3 py-1.5 rounded-xl text-text-muted hover:text-text hover:bg-surface-alt transition-all duration-200">Monitoring</a>
             </>
           )}
           <a href="/matches" className="px-3 py-1.5 rounded-xl text-text-muted hover:text-text hover:bg-surface-alt transition-all duration-200">Matches</a>
