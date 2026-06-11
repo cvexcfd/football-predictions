@@ -137,7 +137,7 @@ export default function AdminMatchesPage() {
 
   const lockMatch = useMutation({
     mutationFn: async (matchId: string) => {
-      const { error } = await supabase.from('matches').update({ status: 'locked' }).eq('id', matchId)
+      const { error } = await supabase.rpc('lock_match', { p_match_id: matchId })
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-matches'] }),

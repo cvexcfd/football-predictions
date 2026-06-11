@@ -119,6 +119,8 @@ CREATE TABLE prediction_audit_log (
   old_pred_away int,
   new_pred_home int,
   new_pred_away int,
+  old_badge_id  uuid REFERENCES badges(id),
+  new_badge_id  uuid REFERENCES badges(id),
   changed_at    timestamptz DEFAULT now()
 );
 
@@ -177,9 +179,7 @@ CREATE OR REPLACE FUNCTION submit_prediction(
 DECLARE
   v_match matches;
   v_old_pred predictions;
-  v_badge_qty int;
 BEGIN
-  -- Lock match row and validate
   SELECT * INTO v_match FROM matches WHERE id = p_match_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Match not found';
@@ -191,31 +191,10 @@ BEGIN
     RAISE EXCEPTION 'Match locks 30 minutes before kickoff';
   END IF;
 
-  -- Get existing prediction if any
   SELECT * INTO v_old_pred FROM predictions
     WHERE player_id = p_player_id AND match_id = p_match_id;
 
-  -- Handle badge changes
-  IF v_old_pred.id IS NOT NULL AND v_old_pred.badge_id_used IS NOT NULL THEN
-    -- Refund old badge
-    UPDATE player_badges SET quantity = quantity + 1
-      WHERE player_id = p_player_id AND badge_id = v_old_pred.badge_id_used;
-  END IF;
-
-  IF p_badge_id IS NOT NULL THEN
-    -- Check badge quantity atomically
-    SELECT quantity INTO v_badge_qty FROM player_badges
-      WHERE player_id = p_player_id AND badge_id = p_badge_id
-      FOR UPDATE;
-    IF v_badge_qty IS NULL OR v_badge_qty <= 0 THEN
-      RAISE EXCEPTION 'Badge not available';
-    END IF;
-    -- Decrement badge
-    UPDATE player_badges SET quantity = quantity - 1
-      WHERE player_id = p_player_id AND badge_id = p_badge_id;
-  END IF;
-
-  -- Upsert prediction
+  -- Upsert prediction (badge_id_used is just a selection, not consumed here)
   INSERT INTO predictions (player_id, match_id, pred_home, pred_away, badge_id_used)
   VALUES (p_player_id, p_match_id, p_pred_home, p_pred_away, p_badge_id)
   ON CONFLICT (player_id, match_id) DO UPDATE SET
@@ -224,8 +203,8 @@ BEGIN
     badge_id_used = EXCLUDED.badge_id_used,
     updated_at = now();
 
-  -- Audit log
-  INSERT INTO prediction_audit_log (prediction_id, player_id, match_id, action, old_pred_home, old_pred_away, new_pred_home, new_pred_away)
+  -- Audit log with badge info
+  INSERT INTO prediction_audit_log (prediction_id, player_id, match_id, action, old_pred_home, old_pred_away, new_pred_home, new_pred_away, old_badge_id, new_badge_id)
   VALUES (
     (SELECT id FROM predictions WHERE player_id = p_player_id AND match_id = p_match_id),
     p_player_id,
@@ -234,7 +213,9 @@ BEGIN
     v_old_pred.pred_home,
     v_old_pred.pred_away,
     p_pred_home,
-    p_pred_away
+    p_pred_away,
+    v_old_pred.badge_id_used,
+    p_badge_id
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -325,7 +306,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Auto-lock matches (called by cron)
+-- Auto-lock matches (called by cron) — also consumes badges at lock time
 CREATE OR REPLACE FUNCTION auto_lock_matches() RETURNS int AS $$
 DECLARE
   v_count int := 0;
@@ -333,19 +314,61 @@ DECLARE
 BEGIN
   FOR v_match IN SELECT * FROM matches WHERE status = 'upcoming' AND kickoff_at <= now() LOOP
     UPDATE matches SET status = 'locked' WHERE id = v_match.id;
-    
-    -- Insert absent rows for players without predictions
+
     INSERT INTO predictions (player_id, match_id, pred_home, pred_away, is_absent)
     SELECT p.id, v_match.id, 0, 0, true
     FROM players p
     WHERE NOT EXISTS (
       SELECT 1 FROM predictions WHERE player_id = p.id AND match_id = v_match.id
     );
-    
+
+    -- Consume badges for predictions on this match that used one
+    UPDATE player_badges pb
+    SET quantity = pb.quantity - 1
+    FROM predictions p
+    WHERE p.match_id = v_match.id
+      AND p.badge_id_used IS NOT NULL
+      AND pb.player_id = p.player_id
+      AND pb.badge_id = p.badge_id_used
+      AND pb.quantity > 0;
+
     v_count := v_count + 1;
   END LOOP;
-  
+
   RETURN v_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Lock a single match (admin manual) — same logic as auto_lock_matches
+CREATE OR REPLACE FUNCTION lock_match(p_match_id uuid) RETURNS void AS $$
+DECLARE
+  v_match RECORD;
+BEGIN
+  SELECT * INTO v_match FROM matches WHERE id = p_match_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Match not found';
+  END IF;
+  IF v_match.status <> 'upcoming' THEN
+    RAISE EXCEPTION 'Match is not upcoming';
+  END IF;
+
+  UPDATE matches SET status = 'locked' WHERE id = p_match_id;
+
+  INSERT INTO predictions (player_id, match_id, pred_home, pred_away, is_absent)
+  SELECT p.id, p_match_id, 0, 0, true
+  FROM players p
+  WHERE NOT EXISTS (
+    SELECT 1 FROM predictions WHERE player_id = p.id AND match_id = p_match_id
+  );
+
+  UPDATE player_badges pb
+  SET quantity = pb.quantity - 1
+  FROM predictions p
+  WHERE p.match_id = p_match_id
+    AND p.badge_id_used IS NOT NULL
+    AND pb.player_id = p.player_id
+    AND pb.badge_id = p.badge_id_used
+    AND pb.quantity > 0;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
