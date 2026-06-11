@@ -12,7 +12,7 @@ const TEMPLATE = `[
     "stage": "Group Stage",
     "pts_exact": 3,
     "pts_result": 1,
-    "pts_win": 1
+    "pts_win": 0
   }
 ]`
 
@@ -64,7 +64,7 @@ export default function AdminImportPage() {
           stage: row.stage || 'Group Stage',
           pts_exact: row.pts_exact ?? 3,
           pts_result: row.pts_result ?? 1,
-          pts_win: row.pts_win ?? 1,
+          pts_win: row.pts_win ?? 0,
         })
         if (error) {
           errors.push(`Row ${i + 1}: ${error.message}`)

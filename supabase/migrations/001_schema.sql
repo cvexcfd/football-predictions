@@ -232,7 +232,6 @@ DECLARE
   v_pred RECORD;
   v_pts_exact_earned int;
   v_pts_result_earned int;
-  v_pts_win_earned int;
   v_pts_raw int;
   v_pts_total int;
   v_badge RECORD;
@@ -258,19 +257,16 @@ BEGIN
     IF v_pred.pred_home = p_home_score AND v_pred.pred_away = p_away_score THEN
       v_pts_exact_earned := v_match.pts_exact;
       v_pts_result_earned := 0;
-      v_pts_win_earned := v_match.pts_win;
     -- Calculate result
     ELSIF v_pred.pred_result = v_actual_result THEN
       v_pts_exact_earned := 0;
       v_pts_result_earned := v_match.pts_result;
-      v_pts_win_earned := v_match.pts_win;
     ELSE
       v_pts_exact_earned := 0;
       v_pts_result_earned := 0;
-      v_pts_win_earned := 0;
     END IF;
 
-    v_pts_raw := v_pts_exact_earned + v_pts_result_earned + v_pts_win_earned;
+    v_pts_raw := v_pts_exact_earned + v_pts_result_earned;
 
     -- Apply badge
     IF v_pred.badge_id_used IS NOT NULL THEN
@@ -294,7 +290,6 @@ BEGIN
     UPDATE predictions SET
       pts_exact_earned = v_pts_exact_earned,
       pts_result_earned = v_pts_result_earned,
-      pts_win_earned = v_pts_win_earned,
       pts_total = v_pts_total
     WHERE id = v_pred.id;
   END LOOP;
