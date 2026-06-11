@@ -384,6 +384,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Give badge to one player (admin) — handles ON CONFLICT by incrementing
+CREATE OR REPLACE FUNCTION give_badge_to_player(p_player_id uuid, p_badge_id uuid, p_quantity int DEFAULT 1) RETURNS void AS $$
+BEGIN
+  INSERT INTO player_badges (player_id, badge_id, quantity)
+  VALUES (p_player_id, p_badge_id, p_quantity)
+  ON CONFLICT (player_id, badge_id) DO UPDATE SET
+    quantity = player_badges.quantity + EXCLUDED.quantity;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Delete player with full cascade
 CREATE OR REPLACE FUNCTION delete_player_cascade(p_player_id uuid)
 RETURNS void AS $$

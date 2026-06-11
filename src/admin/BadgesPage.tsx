@@ -11,6 +11,7 @@ export default function AdminBadgesPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [showDistribute, setShowDistribute] = useState<string | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState('')
+  const [distributeQty, setDistributeQty] = useState('1')
 
   const { data: badges, isLoading } = useQuery({
     queryKey: ['admin-badges'],
@@ -45,15 +46,16 @@ export default function AdminBadgesPage() {
   })
 
   const distributeBadge = useMutation({
-    mutationFn: async ({ badgeId, playerId }: { badgeId: string; playerId: string }) => {
-      const { error } = await supabase.from('player_badges').insert({
-        player_id: playerId, badge_id: badgeId, quantity: 1,
+    mutationFn: async ({ badgeId, playerId, quantity }: { badgeId: string; playerId: string; quantity: number }) => {
+      const { error } = await supabase.rpc('give_badge_to_player', {
+        p_player_id: playerId, p_badge_id: badgeId, p_quantity: quantity,
       })
       if (error) throw error
     },
     onSuccess: () => {
       setShowDistribute(null)
       setSelectedPlayer('')
+      setDistributeQty('1')
       qc.invalidateQueries({ queryKey: ['admin-badges'] })
     },
   })
@@ -142,7 +144,8 @@ export default function AdminBadgesPage() {
                     <option value="">Select player...</option>
                     {players?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </Select>
-                  <Button size="sm" variant="primary" className="shrink-0" onClick={() => distributeBadge.mutate({ badgeId: b.id, playerId: selectedPlayer })} disabled={!selectedPlayer || distributeBadge.isPending}>
+                  <Input type="number" min="1" className="w-16 shrink-0" placeholder="Qty" value={distributeQty} onChange={e => setDistributeQty(e.target.value)} />
+                  <Button size="sm" variant="primary" className="shrink-0" onClick={() => distributeBadge.mutate({ badgeId: b.id, playerId: selectedPlayer, quantity: Number(distributeQty) || 1 })} disabled={!selectedPlayer || distributeBadge.isPending}>
                     Give
                   </Button>
                 </div>
