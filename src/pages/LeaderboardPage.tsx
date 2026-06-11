@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
         predictions: predByMatch.get(m.id) ?? [],
       })) as LiveMatch[]
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 
   const { data: matchHistory } = useQuery({
@@ -166,7 +166,7 @@ export default function LeaderboardPage() {
         predictions: predByMatch.get(m.id) ?? [],
       })) as MatchHistoryEntry[]
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 
   if (isLoading) return <LoadingSpinner />

@@ -106,6 +106,6 @@ export function useLeaderboard() {
 
       return leaderboard
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }
