@@ -34,9 +34,11 @@ export default function MatchesPage() {
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   })
 
-  const matchCount = Object.keys(grouped).length
+  const todayIds = new Set(todayMatches.map(m => m.id))
 
-  if (matchCount === 0) {
+  const matchCount = Object.values(grouped).filter(ms => ms.some(m => !todayIds.has(m.id))).length
+
+  if (matchCount === 0 && todayMatches.length === 0) {
     return (
       <div className="pb-20 max-w-3xl mx-auto">
         <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
@@ -79,16 +81,20 @@ export default function MatchesPage() {
             </div>
           </div>
         )}
-        {Object.entries(grouped).map(([date, dayMatches]) => (
-          <div key={date} className="mb-6">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
-            <div className="space-y-3">
-              {dayMatches.map((m, i) => (
-                <MatchCard key={m.id} match={m} index={i} />
-              ))}
+        {Object.entries(grouped).map(([date, dayMatches]) => {
+          const filteredMatches = dayMatches.filter(m => !todayIds.has(m.id))
+          if (filteredMatches.length === 0) return null
+          return (
+            <div key={date} className="mb-6">
+              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">{date}</h2>
+              <div className="space-y-3">
+                {filteredMatches.map((m, i) => (
+                  <MatchCard key={m.id} match={m} index={i} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
