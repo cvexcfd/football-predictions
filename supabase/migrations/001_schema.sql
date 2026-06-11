@@ -294,10 +294,11 @@ BEGIN
     WHERE id = v_pred.id;
   END LOOP;
 
-  -- Recompute total_points for all players (prevents drift)
+  -- Recompute total_points for affected players (prevents drift)
   UPDATE players p SET total_points = (
     SELECT COALESCE(SUM(pts_total), 0) FROM predictions WHERE player_id = p.id
-  );
+  )
+  WHERE p.id IN (SELECT player_id FROM predictions WHERE match_id = p_match_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
