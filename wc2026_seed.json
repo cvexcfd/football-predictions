@@ -1,5 +1,5 @@
 {
-  "note": "All kickoff_morocco times are in Morocco Standard Time (UTC+1). kickoff_utc is the ISO 8601 UTC timestamp for the database. Source: FIFA / Yahoo Sports official schedule.",
+  "note": "All kickoff_morocco times are in Morocco Standard Time (UTC+1). kickoff_utc is the ISO 8601 UTC timestamp for the database. Source: FIFA / matchtimes.app. All 72 group-stage times verified against official FIFA schedule.",
   "league": {
     "name": "FIFA World Cup 2026",
     "season": "2026",
@@ -67,7 +67,7 @@
     { "match": 6,  "stage": "Group Stage", "group": "C", "home": "BRA", "away": "MAR", "venue": "MetLife Stadium, East Rutherford",         "kickoff_utc": "2026-06-13T22:00:00Z", "kickoff_morocco": "2026-06-13 23:00", "is_placeholder": false },
     { "match": 7,  "stage": "Group Stage", "group": "C", "home": "HAI", "away": "SCO", "venue": "Gillette Stadium, Foxborough",             "kickoff_utc": "2026-06-14T01:00:00Z", "kickoff_morocco": "2026-06-14 02:00", "is_placeholder": false },
 
-    { "match": 8,  "stage": "Group Stage", "group": "D", "home": "AUS", "away": "TUR", "venue": "BC Place, Vancouver",                     "kickoff_utc": "2026-06-14T16:00:00Z", "kickoff_morocco": "2026-06-14 17:00", "is_placeholder": false },
+    { "match": 8,  "stage": "Group Stage", "group": "D", "home": "AUS", "away": "TUR", "venue": "BC Place, Vancouver",                     "kickoff_utc": "2026-06-14T04:00:00Z", "kickoff_morocco": "2026-06-14 05:00", "is_placeholder": false },
     { "match": 9,  "stage": "Group Stage", "group": "E", "home": "GER", "away": "CUW", "venue": "NRG Stadium, Houston",                    "kickoff_utc": "2026-06-14T17:00:00Z", "kickoff_morocco": "2026-06-14 18:00", "is_placeholder": false },
     { "match": 10, "stage": "Group Stage", "group": "F", "home": "NED", "away": "JPN", "venue": "AT&T Stadium, Arlington",                 "kickoff_utc": "2026-06-14T20:00:00Z", "kickoff_morocco": "2026-06-14 21:00", "is_placeholder": false },
     { "match": 11, "stage": "Group Stage", "group": "E", "home": "CIV", "away": "ECU", "venue": "Lincoln Financial Field, Philadelphia",   "kickoff_utc": "2026-06-14T23:00:00Z", "kickoff_morocco": "2026-06-15 00:00", "is_placeholder": false },
