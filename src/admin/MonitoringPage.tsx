@@ -1,9 +1,30 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { LoadingSpinner } from '../components/ui'
+import { Button, LoadingSpinner } from '../components/ui'
 import { formatTime } from '../lib/utils'
+import { useToast } from '../components/Toast'
 
 export default function AdminMonitoringPage() {
+  const { toast } = useToast()
+  const [autoScoring, setAutoScoring] = useState(false)
+  const [autoScoreResult, setAutoScoreResult] = useState<{ scored: number; skipped: number; errors: number } | null>(null)
+
+  const doAutoScore = async () => {
+    setAutoScoring(true)
+    setAutoScoreResult(null)
+    try {
+      const res = await fetch('/api/auto-score', { method: 'POST' })
+      const data = await res.json()
+      setAutoScoreResult(data)
+      toast(`Auto-score: ${data.scored} scored, ${data.errors} errors`, data.errors > 0 ? 'info' : 'success')
+    } catch {
+      toast('Auto-score request failed', 'error')
+    } finally {
+      setAutoScoring(false)
+    }
+  }
+
   const now = new Date()
   const todayStr = now.toLocaleDateString('en-US', { timeZone: 'Africa/Casablanca', weekday: 'long', month: 'long', day: 'numeric' })
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
@@ -142,8 +163,27 @@ export default function AdminMonitoringPage() {
   return (
     <div className="pb-20 max-w-4xl mx-auto">
       <div className="glass-strong rounded-2xl mx-4 mt-4 p-6 mb-6">
-        <h1 className="text-lg font-semibold text-text">Admin</h1>
-        <p className="text-2xl font-bold mt-1 text-text">Match Prediction Status</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-text">Admin</h1>
+            <p className="text-2xl font-bold mt-1 text-text">Match Prediction Status</p>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={doAutoScore}
+              disabled={autoScoring}
+            >
+              {autoScoring ? 'Scoring...' : 'Auto-Score'}
+            </Button>
+            {autoScoreResult && (
+              <span className={`text-[10px] ${autoScoreResult.errors > 0 ? 'text-warning' : 'text-success'}`}>
+                {autoScoreResult.scored} scored · {autoScoreResult.skipped} skipped · {autoScoreResult.errors} errors
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="px-4">
