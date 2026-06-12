@@ -17,17 +17,6 @@ interface ApiMatch {
   type: string
 }
 
-interface DbMatch {
-  id: string
-  home_team_id: string
-  away_team_id: string
-  status: string
-  home_score: number | null
-  away_score: number | null
-  home_team_name?: string
-  away_team_name?: string
-}
-
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
     return new Response('Method not allowed — use POST', { status: 405 })
@@ -55,40 +44,21 @@ export default async function handler(req: Request) {
   const apiData: { games: ApiMatch[] } = await apiRes.json()
   const apiMatches = apiData.games ?? []
 
-  // 2. Fetch our DB teams to build name→id mapping
-  const { data: teams } = await supabase
-    .from('teams')
-    .select('id, name')
-
-  if (!teams) {
-    return new Response('Failed to fetch teams', { status: 500 })
-  }
-
-  const teamByName: Record<string, string> = {}
-  for (const t of teams) {
-    const normalized = t.name.trim().toLowerCase()
-    teamByName[normalized] = t.id
-    teamByName[t.name.trim()] = t.id
-  }
-
-  // 3. Fetch our DB matches that are locked or finished (already scored)
+  // 2. Fetch our DB locked/finished matches with team names
   const { data: dbMatches } = await supabase
     .from('matches')
-    .select('id, home_team_id, away_team_id, status, home_score, away_score')
+    .select(`
+      id, status, home_score, away_score,
+      home_team:home_team_id(name),
+      away_team:away_team_id(name)
+    `)
     .in('status', ['locked', 'finished'])
 
   if (!dbMatches) {
     return new Response('Failed to fetch matches', { status: 500 })
   }
 
-  // Build lookup: set of "homeTeamId-awayTeamId" for group-stage locked matches
-  const dbMatchByTeams = new Map<string, DbMatch>()
-  for (const m of dbMatches) {
-    dbMatchByTeams.set(`${m.home_team_id}-${m.away_team_id}`, m)
-    dbMatchByTeams.set(`${m.away_team_id}-${m.home_team_id}`, m)
-  }
-
-  // 4. Match and score
+  // 3. Match and score
   const scored: string[] = []
   const errors: string[] = []
   const skipped: string[] = []
@@ -105,29 +75,27 @@ export default async function handler(req: Request) {
     const as_ = parseInt(apiM.away_score, 10)
     if (isNaN(hs) || isNaN(as_)) continue
 
-    const mappedHome = NAME_MAP[homeName] ?? homeName
-    const mappedAway = NAME_MAP[awayName] ?? awayName
+    const mappedHome = (NAME_MAP[homeName] ?? homeName).toLowerCase()
+    const mappedAway = (NAME_MAP[awayName] ?? awayName).toLowerCase()
 
-    const homeId = teamByName[mappedHome] || teamByName[mappedHome.toLowerCase()]
-    const awayId = teamByName[mappedAway] || teamByName[mappedAway.toLowerCase()]
-    if (!homeId || !awayId) {
-      errors.push(`Teams not found: ${homeName} (→${mappedHome}) vs ${awayName} (→${mappedAway})`)
-      continue
-    }
+    // Find the matching DB match by comparing team names
+    const dbMatch = (dbMatches as any[]).find(m => {
+      const dbHome = (m.home_team as any)?.name?.toLowerCase()
+      const dbAway = (m.away_team as any)?.name?.toLowerCase()
+      return (dbHome === mappedHome && dbAway === mappedAway) ||
+             (dbHome === mappedAway && dbAway === mappedHome)
+    })
 
-    const dbMatch = dbMatchByTeams.get(`${homeId}-${awayId}`)
     if (!dbMatch) {
-      skipped.push(`No locked/finished match in DB: ${homeName} vs ${awayName}`)
+      skipped.push(`No locked/finished match in DB: ${mappedHome} vs ${mappedAway}`)
       continue
     }
 
-    // Don't re-score if already has same score
     if (dbMatch.status === 'finished' && dbMatch.home_score === hs && dbMatch.away_score === as_) {
       skipped.push(`Already scored: ${homeName} ${hs}-${as_} ${awayName}`)
       continue
     }
 
-    // If finished with different score or locked (not yet scored) — update
     const { error } = await supabase.rpc('calculate_match_points', {
       p_match_id: dbMatch.id,
       p_home_score: hs,
