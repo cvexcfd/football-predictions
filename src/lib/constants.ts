@@ -25,4 +25,3 @@ export const GROUP_NAMES = [
   'Group E', 'Group F', 'Group G', 'Group H',
   'Group I', 'Group J', 'Group K', 'Group L',
 ] as const
-export const DEPLOY_VERSION = "1.0-clean"
