@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { Button, Input, Select, LoadingSpinner } from '../components/ui'
+import { Button, Input, Select, LoadingSpinner, Badge } from '../components/ui'
 import { useToast } from '../components/Toast'
 
 interface GroupStanding {
@@ -183,7 +183,6 @@ export default function AdminBracketPage() {
   })
 
   const standings = groupMatches ? computeGroupStandings(groupMatches as Array<Record<string, unknown>>) : []
-
   const { groupWinners, groupRunnersUp } = getAdvancingTeams(standings)
 
   const winnerMap = new Map<string, string>()
@@ -200,6 +199,20 @@ export default function AdminBracketPage() {
       toast('Match teams updated', 'success')
       qc.invalidateQueries({ queryKey: ['knockout-matches'] })
       setEditTeamMatchId(null)
+    },
+    onError: (err: Error) => toast(err.message, 'error'),
+  })
+
+  const populateMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('auto_populate_bracket')
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data: any) => {
+      qc.invalidateQueries({ queryKey: ['knockout-matches'] })
+      qc.invalidateQueries({ queryKey: ['group-matches-finished'] })
+      toast(`Bracket populated: ${data.updated} updated, ${data.skipped} skipped`, 'success')
     },
     onError: (err: Error) => toast(err.message, 'error'),
   })
@@ -257,6 +270,25 @@ export default function AdminBracketPage() {
           )}
         </div>
 
+        {/* Populate Bracket Button */}
+        <div className="glass rounded-2xl p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-text">Auto-Populate Bracket</div>
+              <div className="text-xs text-text-muted mt-0.5">
+                Resolves Winner/Runner-up Group references and chained match winners from finished results
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => populateMutation.mutate()}
+              disabled={populateMutation.isPending}
+            >
+              {populateMutation.isPending ? 'Populating...' : 'Populate Bracket'}
+            </Button>
+          </div>
+        </div>
+
         {groupedByStage.map(({ stage, matches }) => (
           <div key={stage} className="glass rounded-2xl p-4 mb-4">
             <h2 className="text-sm font-semibold text-text mb-3">{stage}</h2>
@@ -265,10 +297,9 @@ export default function AdminBracketPage() {
             ) : (
               <div className="space-y-3">
                 {matches.map(m => {
-                  const autoHome = m.home_team_id
-                  const autoAway = m.away_team_id
-
                   const isEditing = editTeamMatchId === m.id
+                  const homeIsPlaceholder = m.home_team && !m.home_team_id
+                  const awayIsPlaceholder = m.away_team && !m.away_team_id
 
                   return (
                     <div key={m.id} className="border border-border/50 rounded-xl p-3">
@@ -282,7 +313,10 @@ export default function AdminBracketPage() {
                           ) : (
                             <div className="flex items-center gap-1.5">
                               {m.home_team?.flag_url && <img src={m.home_team.flag_url} alt="" className="w-4 h-3 object-contain" />}
-                              <span className="font-semibold text-sm text-text truncate">{m.home_team?.name ?? 'TBD'}</span>
+                              <span className={`font-semibold text-sm truncate ${!m.home_team_id ? 'text-text-muted italic' : 'text-text'}`}>
+                                {m.home_team?.name ?? 'TBD'}
+                              </span>
+                              {!m.home_team_id && <Badge variant="warning">TBD</Badge>}
                             </div>
                           )}
                         </div>
@@ -301,18 +335,16 @@ export default function AdminBracketPage() {
                             </Select>
                           ) : (
                             <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-sm text-text truncate">{m.away_team?.name ?? 'TBD'}</span>
+                              <span className={`font-semibold text-sm truncate ${!m.away_team_id ? 'text-text-muted italic' : 'text-text'}`}>
+                                {m.away_team?.name ?? 'TBD'}
+                              </span>
+                              {!m.away_team_id && <Badge variant="warning">TBD</Badge>}
                               {m.away_team?.flag_url && <img src={m.away_team.flag_url} alt="" className="w-4 h-3 object-contain" />}
                             </div>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        {!m.home_team_id && groupWinners.length > 0 && (
-                          <div className="text-[10px] text-text-muted">
-                            Suggested: {groupWinners.map(w => `${w.team_name} (${w.group_name} winner)`).join(', ')}
-                          </div>
-                        )}
                         {m.status !== 'finished' && (
                           <Button size="sm" variant="ghost" className="text-[10px] px-2 h-auto ml-auto"
                             onClick={() => {
