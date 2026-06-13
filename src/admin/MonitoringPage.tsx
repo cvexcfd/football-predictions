@@ -75,10 +75,10 @@ export default function AdminMonitoringPage() {
     return d === td
   }) ?? []
 
-  const nonAdminPlayers = players?.filter(p => !p.is_admin) ?? []
+  const allPlayers = players ?? []
   const playersWithMissing: string[] = []
   if (todayMatches.length > 0 && predictions) {
-    for (const p of nonAdminPlayers) {
+    for (const p of allPlayers) {
       const hasAll = todayMatches.every(m => predictions[m.id]?.[p.id])
       if (!hasAll) playersWithMissing.push(p.name)
     }
@@ -93,8 +93,8 @@ export default function AdminMonitoringPage() {
             <tr className="border-b border-border/50">
               <th className="px-2 py-2 text-left font-semibold text-text-muted text-[10px] uppercase tracking-wider whitespace-nowrap">Match</th>
               <th className="px-2 py-2 text-left font-semibold text-text-muted text-[10px] uppercase tracking-wider whitespace-nowrap">Time</th>
-              {nonAdminPlayers.map(p => (
-                <th key={p.id} className="px-2 py-2 text-center font-semibold text-text-muted text-[10px] uppercase tracking-wider whitespace-nowrap">{p.name}</th>
+              {allPlayers.map(p => (
+                <th key={p.id} className="px-2 py-2 text-center font-semibold text-text-muted text-[10px] uppercase tracking-wider whitespace-nowrap">{p.name}{p.is_admin ? ' (admin)' : ''}</th>
               ))}
             </tr>
           </thead>
@@ -113,7 +113,7 @@ export default function AdminMonitoringPage() {
                     </div>
                   </td>
                   <td className="px-2 py-2.5 text-xs text-text-muted whitespace-nowrap">{formatTime(m.kickoff_at)}</td>
-                  {nonAdminPlayers.map(p => {
+                  {allPlayers.map(p => {
                     const pred = matchPreds[p.id]
                     return (
                       <td key={p.id} className="px-2 py-2.5 text-center">
