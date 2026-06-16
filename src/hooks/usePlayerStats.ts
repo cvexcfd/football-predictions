@@ -40,13 +40,15 @@ export function usePlayerStats(playerId: string) {
         const at = m?.away_team as Record<string, unknown> | Array<Record<string, unknown>> | null
         const homeName = ht ? (Array.isArray(ht) ? (ht[0]?.name as string ?? '?') : (ht.name as string ?? '?')) : '?'
         const awayName = at ? (Array.isArray(at) ? (at[0]?.name as string ?? '?') : (at.name as string ?? '?')) : '?'
+        const isAbsent = (p.is_absent as boolean) ?? false
         return {
           match: `${homeName} vs ${awayName}`,
           points: p.pts_total as number,
           date: (m.kickoff_at ?? p.updated_at) as string,
           badgeUsed: p.badge_id_used ? 'Yes' : 'No',
           result: p.pred_result as string,
-          predScore: `${p.pred_home}-${p.pred_away}`,
+          predScore: isAbsent ? '—' : `${p.pred_home}-${p.pred_away}`,
+          isAbsent,
         }
       }).reverse()
 

@@ -19,6 +19,7 @@ interface PredInfo {
   predAway: number
   pts: number
   badge: string | null
+  isAbsent: boolean
 }
 
 interface CommonMatch {
@@ -99,11 +100,11 @@ function Comparison({ p1Id, p2Id }: { p1Id: string; p2Id: string }) {
       const [r1, r2] = await Promise.all([
         supabase
           .from('predictions')
-          .select('match_id, pred_home, pred_away, pts_total, badge_id_used, match:match_id(kickoff_at, stage, status, home_score, away_score, home_team:home_team_id(name, code, flag_url), away_team:away_team_id(name, code, flag_url))')
+          .select('match_id, pred_home, pred_away, pts_total, badge_id_used, is_absent, match:match_id(kickoff_at, stage, status, home_score, away_score, home_team:home_team_id(name, code, flag_url), away_team:away_team_id(name, code, flag_url))')
           .eq('player_id', p1Id),
         supabase
           .from('predictions')
-          .select('match_id, pred_home, pred_away, pts_total, badge_id_used, match:match_id(kickoff_at, stage, status, home_score, away_score, home_team:home_team_id(name, code, flag_url), away_team:away_team_id(name, code, flag_url))')
+          .select('match_id, pred_home, pred_away, pts_total, badge_id_used, is_absent, match:match_id(kickoff_at, stage, status, home_score, away_score, home_team:home_team_id(name, code, flag_url), away_team:away_team_id(name, code, flag_url))')
           .eq('player_id', p2Id),
       ])
 
@@ -120,8 +121,8 @@ function Comparison({ p1Id, p2Id }: { p1Id: string; p2Id: string }) {
         return {
           matchId: id,
           match: a.match,
-          p1: { predHome: a.predHome, predAway: a.predAway, pts: a.pts, badge: a.badge },
-          p2: { predHome: b.predHome, predAway: b.predAway, pts: b.pts, badge: b.badge },
+          p1: { predHome: a.predHome, predAway: a.predAway, pts: a.pts, badge: a.badge, isAbsent: a.isAbsent },
+          p2: { predHome: b.predHome, predAway: b.predAway, pts: b.pts, badge: b.badge, isAbsent: b.isAbsent },
         } as CommonMatch
       }).filter(c => c.match?.status === 'locked' || c.match?.status === 'finished')
       .sort((a, b) => {
@@ -229,7 +230,7 @@ function Comparison({ p1Id, p2Id }: { p1Id: string; p2Id: string }) {
   )
 }
 
-function normalizePred(raw: Record<string, unknown>): [string, { predHome: number; predAway: number; pts: number; badge: string | null; match: MatchInfo | null }] {
+function normalizePred(raw: Record<string, unknown>): [string, { predHome: number; predAway: number; pts: number; badge: string | null; match: MatchInfo | null; isAbsent: boolean }] {
   const mRaw = raw.match as Record<string, unknown> | Array<Record<string, unknown>> | null
   const m = mRaw ? (Array.isArray(mRaw) ? mRaw[0] : mRaw) : null
 
@@ -258,6 +259,7 @@ function normalizePred(raw: Record<string, unknown>): [string, { predHome: numbe
       predAway: raw.pred_away as number,
       pts: raw.pts_total as number,
       badge: raw.badge_id_used as string | null,
+      isAbsent: (raw.is_absent as boolean) ?? false,
       match,
     },
   ]
@@ -269,7 +271,7 @@ function PredCell({ name, pred, side }: { name: string; pred: PredInfo; side: 'l
       <div className={`text-[10px] font-medium text-text-muted ${side === 'right' ? 'text-right' : ''}`}>{name}</div>
       <div className="flex items-center gap-1.5 mt-0.5 justify-between">
         <span className={`font-bold text-sm ${pred.pts > 0 ? 'text-success' : 'text-text-dim'}`}>
-          {pred.predHome}-{pred.predAway}
+          {pred.isAbsent ? '—' : `${pred.predHome}-${pred.predAway}`}
         </span>
         <span className={`text-xs font-bold ${pred.pts > 0 ? 'text-success' : 'text-text-dim'}`}>
           {pred.pts > 0 ? `+${pred.pts}` : '0'}

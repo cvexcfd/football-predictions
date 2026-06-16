@@ -146,9 +146,9 @@ export function MatchCard({ match, index = 0 }: Props) {
           {locked && (
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-1.5 text-xl font-extrabold">
-                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.pred_home ?? '-'}</span>
+                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.is_absent ? '—' : (match.prediction?.pred_home ?? '-')}</span>
                 <span className="text-text-dim font-bold">:</span>
-                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.pred_away ?? '-'}</span>
+                <span className={finished && match.prediction ? 'text-text' : 'text-text-muted'}>{match.prediction?.is_absent ? '—' : (match.prediction?.pred_away ?? '-')}</span>
               </div>
               {finished && match.prediction && (
                 <span className={`text-[10px] font-bold ${match.prediction.pts_total > 0 ? 'text-success' : 'text-text-dim'}`}>

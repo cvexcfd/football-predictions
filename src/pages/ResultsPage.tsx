@@ -215,11 +215,11 @@ export default function ResultsPage() {
                 {expandedMatch === m.id && (
                   <div className="border-t border-border/50 px-4 py-3 space-y-1.5 glass-strong">
                     {(predictions[m.id as string] ?? []).length ? (
-                      (predictions[m.id as string] as Array<{ id: string; player: { name: string }; pred_home: number; pred_away: number; pts_total: number; badge?: { name: string } | null }>).map(p => (
+                      (predictions[m.id as string] as Array<{ id: string; player: { name: string }; pred_home: number; pred_away: number; pts_total: number; is_absent: boolean; badge?: { name: string } | null }>).map(p => (
                         <div key={p.id} className="flex items-center justify-between text-sm py-1.5">
                           <span className="font-medium text-text text-sm">{p.player.name}</span>
                           <div className="flex items-center gap-3">
-                            <span className="text-text-muted text-xs">{p.pred_home} - {p.pred_away}</span>
+                            <span className="text-text-muted text-xs">{p.is_absent ? '—' : `${p.pred_home} - ${p.pred_away}`}</span>
                             {p.badge && <span className="text-[10px] text-text-muted bg-surface-alt px-1.5 py-0.5 rounded">{p.badge.name}</span>}
                             <span className={`font-bold text-sm ${p.pts_total > 0 ? 'text-success' : 'text-text-dim'}`}>
                               {p.pts_total > 0 ? `+${p.pts_total}` : '0'}

@@ -18,6 +18,7 @@ interface LiveMatch {
     pred_away: number
     player: { name: string } | null
     badge: { name: string; type: string; factor: number } | null
+    is_absent: boolean
   }>
 }
 
@@ -55,7 +56,7 @@ export default function LeaderboardPage() {
       const { data: rawPreds } = await supabase
         .from('predictions')
         .select(`
-          match_id, player_id, pred_home, pred_away, badge_id_used,
+          match_id, player_id, pred_home, pred_away, badge_id_used, is_absent,
           player:player_id(name),
           badge:badge_id_used(name, type, factor)
         `)
@@ -67,6 +68,7 @@ export default function LeaderboardPage() {
         pred_away: number
         player: { name: string } | null
         badge: { name: string; type: string; factor: number } | null
+        is_absent: boolean
       }>>()
       for (const p of rawPreds ?? []) {
         const pp = p as unknown as {
@@ -74,6 +76,7 @@ export default function LeaderboardPage() {
           player_id: string
           pred_home: number
           pred_away: number
+          is_absent: boolean
           player: Array<{ name: string }> | { name: string } | null
           badge: Array<{ name: string; type: string; factor: number }> | { name: string; type: string; factor: number } | null
         }
@@ -81,6 +84,7 @@ export default function LeaderboardPage() {
           player_id: pp.player_id,
           pred_home: pp.pred_home,
           pred_away: pp.pred_away,
+          is_absent: pp.is_absent ?? false,
           player: Array.isArray(pp.player) ? pp.player[0] ?? null : (pp.player as { name: string } | null),
           badge: Array.isArray(pp.badge) ? pp.badge[0] ?? null : (pp.badge as { name: string; type: string; factor: number } | null),
         }
@@ -128,7 +132,7 @@ export default function LeaderboardPage() {
       const { data: rawPreds } = await supabase
         .from('predictions')
         .select(`
-          match_id, player_id, pred_home, pred_away, pts_total,
+          match_id, player_id, pred_home, pred_away, pts_total, is_absent,
           player:player_id(name)
         `)
         .in('match_id', matchIds)
@@ -139,6 +143,7 @@ export default function LeaderboardPage() {
         pred_home: number
         pred_away: number
         pts_total: number
+        is_absent: boolean
       }>>()
       for (const p of rawPreds ?? []) {
         const pp = p as unknown as {
@@ -147,6 +152,7 @@ export default function LeaderboardPage() {
           pred_home: number
           pred_away: number
           pts_total: number
+          is_absent: boolean
           player: Array<{ name: string }> | { name: string } | null
         }
         const entry = {
@@ -155,6 +161,7 @@ export default function LeaderboardPage() {
           pred_home: pp.pred_home,
           pred_away: pp.pred_away,
           pts_total: pp.pts_total,
+          is_absent: pp.is_absent ?? false,
         }
         const arr = predByMatch.get(pp.match_id) ?? []
         arr.push(entry)
@@ -235,7 +242,7 @@ export default function LeaderboardPage() {
                           <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-surface-alt transition-colors">
                             <span className="font-medium text-text">{p.player?.name ?? '?'}</span>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-primary">{p.pred_home}-{p.pred_away}</span>
+                              <span className="font-bold text-primary">{p.is_absent ? '—' : `${p.pred_home}-${p.pred_away}`}</span>
                               {p.badge && (
                                 <span className="text-[10px] text-text-muted bg-surface-alt px-1.5 py-0.5 rounded-full">
                                   {p.badge.name} ({p.badge.type === 'multiplier' ? '×' : '+'}{p.badge.factor})
@@ -350,7 +357,7 @@ export default function LeaderboardPage() {
                           <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-surface-alt transition-colors">
                             <span className="font-medium text-text">{p.player_name}</span>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-text-dim">{p.pred_home}-{p.pred_away}</span>
+                              <span className="font-bold text-text-dim">{p.is_absent ? '—' : `${p.pred_home}-${p.pred_away}`}</span>
                               {p.pts_total > 0 ? (
                                 <span className="text-success font-bold text-[11px]">+{p.pts_total}</span>
                               ) : (

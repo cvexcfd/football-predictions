@@ -135,6 +135,7 @@ export interface MatchHistoryEntry {
     pred_home: number
     pred_away: number
     pts_total: number
+    is_absent: boolean
   }>
 }
 
@@ -150,5 +151,5 @@ export interface PlayerStats {
   exactScores: number
   totalPoints: number
   badgesUsed: number
-  pointsPerMatch: { match: string; points: number; date: string; badgeUsed: string; result: string; predScore: string }[]
+  pointsPerMatch: { match: string; points: number; date: string; badgeUsed: string; result: string; predScore: string; isAbsent?: boolean }[]
 }

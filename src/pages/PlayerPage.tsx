@@ -57,6 +57,7 @@ export default function PlayerPage() {
           pred_result: r.pred_result as string,
           pts_total: r.pts_total as number,
           submitted_at: r.submitted_at as string,
+          is_absent: (r.is_absent as boolean) ?? false,
           badge,
           match: match ? {
             id: match.id as string,
@@ -212,14 +213,14 @@ export default function PlayerPage() {
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-text-dim">Pred:</span>
                         <span className={`font-bold text-sm ${isExact ? 'text-success' : isCorrect ? 'text-warning' : 'text-text-dim'}`}>
-                          {p.pred_home}-{p.pred_away}
+                          {'is_absent' in p && (p as Record<string, unknown>).is_absent ? '—' : `${p.pred_home}-${p.pred_away}`}
                         </span>
                         <span className="text-text-dim text-xs mx-1">|</span>
                         <span className="text-xs text-text-dim">Actual:</span>
                         <span className="font-bold text-sm text-text">{match.home_score}-{match.away_score}</span>
                       </div>
                     ) : (
-                      <span className="font-bold text-sm text-primary">{p.pred_home}-{p.pred_away}</span>
+                      <span className="font-bold text-sm text-primary">{'is_absent' in p && (p as Record<string, unknown>).is_absent ? '—' : `${p.pred_home}-${p.pred_away}`}</span>
                     )}
                   </div>
 

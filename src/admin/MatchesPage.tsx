@@ -468,7 +468,7 @@ export default function AdminMatchesPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-text-dim">{(p as Record<string, unknown>).pred_home as number}-{(p as Record<string, unknown>).pred_away as number}</span>
+                          <span className="font-bold text-text-dim">{(p as Record<string, unknown>).is_absent ? '—' : `${(p as Record<string, unknown>).pred_home as number}-${(p as Record<string, unknown>).pred_away as number}`}</span>
                           <button className="text-[10px] text-primary hover:text-primary-dark underline" onClick={() => setEditPrediction(ep => ({ ...ep, [m.id]: { playerId: p.player_id as string, h: String((p as Record<string, unknown>).pred_home ?? ''), a: String((p as Record<string, unknown>).pred_away ?? '') } }))}>
                             Edit Prediction
                           </button>

@@ -109,7 +109,7 @@ export default function MyStatsPage() {
             <div key={i} className="flex items-center justify-between px-3 py-2 hover:bg-surface-alt/50 transition-colors text-xs">
               <span className="text-text-muted truncate min-w-0 flex-1 pr-2">{ppm.match}</span>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-text-dim text-[10px] bg-surface-alt px-1.5 py-0.5 rounded">{ppm.predScore}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${ppm.isAbsent ? 'text-danger/70 bg-danger/10' : 'text-text-dim bg-surface-alt'}`}>{ppm.isAbsent ? '—' : ppm.predScore}</span>
                 <span className={`font-bold ${ppm.points > 0 ? 'text-success' : 'text-text-dim'}`}>
                   {ppm.points > 0 ? `+${ppm.points}` : '0'}
                 </span>
