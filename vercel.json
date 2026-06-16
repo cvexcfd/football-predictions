@@ -1,3 +1,13 @@
 {
+  "crons": [
+    {
+      "path": "/api/lock-matches",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/auto-score",
+      "schedule": "*/30 * * * *"
+    }
+  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
