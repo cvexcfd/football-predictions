@@ -2,8 +2,8 @@ name: Auto-Score Matches
 
 on:
   schedule:
-    # Every 30 minutes — aligns with match check interval
-    - cron: '*/30 * * * *'
+    # Every 10 minutes — GH Actions cron has delays, shorter interval catches windows reliably
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     # Manual trigger from GitHub Actions UI
 
