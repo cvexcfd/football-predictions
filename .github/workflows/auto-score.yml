@@ -1,0 +1,28 @@
+name: Auto-Score Matches
+
+on:
+  schedule:
+    # Every 30 minutes — aligns with match check interval
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    # Manual trigger from GitHub Actions UI
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  WC2026_API_KEY: ${{ secrets.WC2026_API_KEY }}
+
+jobs:
+  auto-score:
+    runs-on: ubuntu-latest
+    # Skip if secrets aren't configured yet
+    if: env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != '' && env.WC2026_API_KEY != ''
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run auto-score script
+        run: python3 .github/scripts/auto-score.py
+
+      - name: Log run timestamp
+        run: echo "Auto-score completed at $(date -u)"
