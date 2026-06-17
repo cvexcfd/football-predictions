@@ -45,104 +45,97 @@ export default async function handler() {
     console.error('Lock error:', lockErr.message)
   }
 
-  // ── 2. Check backoff from auto_score_config ──
-  const { data: config } = await supabase
-    .from('auto_score_config')
-    .select('last_run_result')
-    .eq('id', true)
-    .single()
+  // ── 2. Fetch API with retries — fallback to cached_data on failure ──
+  let games: GameJson[] | null = null
+  let usingCache = false
 
-  if (config?.last_run_result?.startsWith('backoff_')) {
-    const ts = config.last_run_result.slice(8)
-    const until = new Date(ts).getTime()
-    if (until > Date.now()) {
-      await supabase.from('auto_score_logs').insert({
-        action: 'info',
-        details: `Skipped — in backoff until ${ts}`,
-        success: true,
-      })
-      return new Response(`Backoff until ${ts}`, { status: 200 })
+  async function fetchFromApi(): Promise<GameJson[] | null> {
+    const maxRetries = 3
+    const retryDelays = [5000, 10000, 20000, 40000]
+    let httpRes: Response | null = null
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+      try {
+        httpRes = await fetch('https://worldcup26.ir/get/games', {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+        })
+        clearTimeout(timer)
+        if (httpRes.status !== 200) {
+          console.error(`Fetch attempt ${attempt + 1} bad status:`, httpRes.status)
+          if (attempt < maxRetries - 1) {
+            await new Promise(res => setTimeout(res, retryDelays[attempt]))
+            continue
+          }
+          return null
+        }
+        const body: { games?: GameJson[] } = await httpRes.json()
+        if (!body?.games || !Array.isArray(body.games)) {
+          console.error('API response missing games array')
+          return null
+        }
+        // On success, store as cached_data for future use
+        const details = JSON.stringify(body.games)
+        supabase.from('auto_score_logs').insert({
+          action: 'cached_data',
+          details,
+          success: true,
+        }).then().catch(() => {})
+        return body.games
+      } catch (err) {
+        clearTimeout(timer)
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        console.error(`Fetch attempt ${attempt + 1} failed:`, msg)
+        if (attempt < maxRetries - 1) {
+          await new Promise(res => setTimeout(res, retryDelays[attempt]))
+          continue
+        }
+        return null
+      }
+    }
+    return null
+  }
+
+  async function fetchFromCache(): Promise<GameJson[] | null> {
+    const { data: logs } = await supabase
+      .from('auto_score_logs')
+      .select('details')
+      .eq('action', 'cached_data')
+      .eq('success', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (!logs || logs.length === 0) return null
+    try {
+      const parsed = JSON.parse(logs[0].details)
+      if (!Array.isArray(parsed)) return null
+      return parsed as GameJson[]
+    } catch {
+      return null
     }
   }
 
-  // ── 3. Fetch games from API ──
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
-
-  let httpRes: Response
-  try {
-    httpRes = await fetch('https://worldcup26.ir/get/games', {
-      signal: controller.signal,
-      headers: { Accept: 'application/json' },
-    })
-  } catch (err) {
-    clearTimeout(timer)
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    console.error('Fetch error:', msg)
-
-    const until = new Date(Date.now() + BACKOFF_AFTER_ERROR_MS).toISOString()
-    await Promise.all([
-      supabase.from('auto_score_logs').insert({
+  games = await fetchFromApi()
+  if (!games) {
+    games = await fetchFromCache()
+    if (games) {
+      usingCache = true
+      console.log('Using cached games data')
+      await supabase.from('auto_score_logs').insert({
+        action: 'info',
+        details: 'Using cached games data (API unavailable)',
+        success: true,
+      })
+    } else {
+      await supabase.from('auto_score_logs').insert({
         action: 'error',
-        details: `HTTP request failed: ${msg}`,
+        details: 'API unavailable and no cached data available',
         success: false,
-      }),
-      supabase.from('auto_score_config').update({
-        last_run_at: new Date().toISOString(),
-        last_run_result: `backoff_${until}`,
-      }).eq('id', true),
-    ])
-
-    return new Response(`API error: ${msg}`, { status: 200 })
+      })
+      return new Response('API unavailable and no cache', { status: 200 })
+    }
   }
-  clearTimeout(timer)
-
-  // ── 4. Handle HTTP errors ──
-  if (httpRes.status !== 200) {
-    const is429 = httpRes.status === 429
-    const backoffMs = is429 ? BACKOFF_AFTER_429_MS : BACKOFF_AFTER_ERROR_MS
-    const until = new Date(Date.now() + backoffMs).toISOString()
-
-    await Promise.all([
-      supabase.from('auto_score_logs').insert({
-        action: 'error',
-        details: `HTTP ${httpRes.status} from worldcup26.ir`,
-        success: false,
-      }),
-      supabase.from('auto_score_config').update({
-        last_run_at: new Date().toISOString(),
-        last_run_result: `backoff_${until}`,
-      }).eq('id', true),
-    ])
-
-    console.error(`HTTP ${httpRes.status} — backoff until ${until}`)
-    return new Response(`HTTP ${httpRes.status}`, { status: 200 })
-  }
-
-  // ── 5. Parse JSON ──
-  let body: { games?: GameJson[] }
-  try {
-    body = await httpRes.json()
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    await supabase.from('auto_score_logs').insert({
-      action: 'error',
-      details: `JSON parse failed: ${msg}`,
-      success: false,
-    })
-    return new Response(`JSON error: ${msg}`, { status: 200 })
-  }
-
-  if (!body?.games || !Array.isArray(body.games)) {
-    await supabase.from('auto_score_logs').insert({
-      action: 'error',
-      details: 'API response missing "games" array',
-      success: false,
-    })
-    return new Response('No games in response', { status: 200 })
-  }
-
-  const games = body.games
 
   // ── 6. Find locked matches past scoring deadline ──
   const cutoff = new Date(Date.now() - SCORE_AFTER_MS).toISOString()

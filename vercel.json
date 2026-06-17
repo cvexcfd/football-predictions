@@ -5,6 +5,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/refresh-cache",
+      "schedule": "*/10 * * * *"
+    },
+    {
       "path": "/api/auto-score",
       "schedule": "*/30 * * * *"
     }
