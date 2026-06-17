@@ -5,67 +5,78 @@ Called by GitHub Actions cron (every 30 min) or manually via workflow_dispatch.
 Requires env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WC2026_API_KEY
 """
 
-import json, os, sys, time, urllib.request, urllib.error
+import json, os, sys, time, urllib.request, urllib.error, urllib.parse
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 WC2026_API_KEY = os.environ.get("WC2026_API_KEY")
 
 API_URL = "https://worldcup26.ir/get/games"
-SCORE_AFTER_MS = 2 * 60 * 60 * 1000  # 2 hours past kickoff
+SCORE_AFTER_S = 2 * 60 * 60  # 2 hours past kickoff
+
 
 def die(msg: str, code: int = 1) -> None:
     print(f"FATAL: {msg}")
     sys.exit(code)
 
-def supabase_get(path: str) -> dict | list | None:
-    url = f"{SUPABASE_URL}/rest/v1/{path}"
-    req = urllib.request.Request(url, headers={
+
+def _headers() -> dict:
+    return {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Accept": "application/json",
-    })
+    }
+
+
+def supabase_get(table: str, params: dict | None = None) -> dict | list | None:
+    """GET rows from a Supabase table with optional query params."""
+    # Build query string manually — urlencode would mangle Supabase operators like eq(status)
+    qs_list = []
+    if params:
+        for k, v in params.items():
+            encoded_v = urllib.parse.quote(str(v), safe='')
+            qs_list.append(f"{k}={encoded_v}")
+    qs = "?" + "&".join(qs_list) if qs_list else ""
+    url = f"{SUPABASE_URL}/rest/v1/{table}{qs}"
+    req = urllib.request.Request(url, headers={**_headers(), "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             body = resp.read().decode()
             return json.loads(body)
     except urllib.error.HTTPError as e:
         body = e.read().decode() if e.code != 204 else "{}"
-        print(f"HTTP {e.code} GET {path}: {body[:200]}")
+        print(f"HTTP {e.code} GET {url}: {body[:200]}")
         return None
     except Exception as e:
-        print(f"GET {path} failed: {e}")
+        print(f"GET {url} failed: {e}")
         return None
 
-def supabase_post(path: str, body_obj: dict) -> dict | None:
-    url = f"{SUPABASE_URL}/rest/v1/{path}"
+
+def supabase_patch(table: str, body_obj: dict, where: str | None = None) -> bool:
+    """PATCH (update) rows in a Supabase table."""
+    qs = f"?{where}" if where else ""
+    url = f"{SUPABASE_URL}/rest/v1/{table}{qs}"
     data = json.dumps(body_obj).encode()
-    req = urllib.request.Request(url, data=data, headers={
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+    req = urllib.request.Request(url, data=data, method="PATCH", headers={
+        **_headers(), "Content-Type": "application/json", "Accept": "application/json",
     })
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode()
-            return json.loads(body) if body else {"status": "ok"}
+        with urllib.request.urlopen(req, timeout=30):
+            return True
     except urllib.error.HTTPError as e:
         body = e.read().decode()
-        print(f"HTTP {e.code} POST {path}: {body[:200]}")
-        return None
+        print(f"HTTP {e.code} PATCH {url}: {body[:200]}")
+        return False
     except Exception as e:
-        print(f"POST {path} failed: {e}")
-        return None
+        print(f"PATCH {url} failed: {e}")
+        return False
+
 
 def supabase_rpc(rpc_name: str, params: dict | None = None) -> dict | None:
+    """Call a Supabase RPC function."""
     url = f"{SUPABASE_URL}/rest/v1/rpc/{rpc_name}"
     data = json.dumps(params or {}).encode()
-    req = urllib.request.Request(url, data=data, headers={
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+    req = urllib.request.Request(url, data=data, method="POST", headers={
+        **_headers(), "Content-Type": "application/json", "Accept": "application/json",
     })
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
@@ -79,9 +90,11 @@ def supabase_rpc(rpc_name: str, params: dict | None = None) -> dict | None:
         print(f"RPC {rpc_name} failed: {e}")
         return None
 
+
 def log_entry(action: str, details: str, success: bool,
               match_id: str | None = None,
               external_id: int | None = None) -> None:
+    """Insert a log entry into auto_score_logs."""
     entry = {
         "action": action,
         "details": details,
@@ -89,16 +102,27 @@ def log_entry(action: str, details: str, success: bool,
         "match_id": match_id,
         "external_id": external_id,
     }
-    result = supabase_post("auto_score_logs", entry)
-    if result is None:
-        print(f"  WARN: failed to log entry: {action}")
+    url = f"{SUPABASE_URL}/rest/v1/auto_score_logs"
+    data = json.dumps(entry).encode()
+    req = urllib.request.Request(url, data=data, method="POST", headers={
+        **_headers(), "Content-Type": "application/json", "Prefer": "return=minimal",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30):
+            pass
+    except Exception as e:
+        print(f"  WARN: log insert failed: {e}")
+
 
 def update_config(result: str) -> None:
-    """Update the auto_score_config table."""
-    supabase_post("auto_score_config?id=eq.true", {
-        "last_run_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "last_run_result": result,
-    })
+    """Update the auto_score_config singleton row."""
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ok = supabase_patch("auto_score_config",
+                        {"last_run_at": now, "last_run_result": result},
+                        where="id=eq.true")
+    if not ok:
+        print("  WARN: config update failed")
+
 
 def fetch_games() -> list[dict] | None:
     """Fetch games from worldcup26.ir with retries."""
@@ -106,23 +130,19 @@ def fetch_games() -> list[dict] | None:
     retry_delays = [5, 10, 20]
 
     for attempt in range(max_retries):
-        req = urllib.request.Request(API_URL, headers={
-            "Accept": "application/json",
-        })
+        req = urllib.request.Request(API_URL, headers={"Accept": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=20) as resp:
-                code = resp.status
-                if code != 200:
-                    print(f"API attempt {attempt+1} returned {code}")
+                if resp.status != 200:
+                    print(f"API attempt {attempt+1} returned {resp.status}")
                     if attempt < max_retries - 1:
                         time.sleep(retry_delays[attempt])
                         continue
                     return None
-                body = resp.read().decode()
-                data = json.loads(body)
+                data = json.loads(resp.read().decode())
                 games = data.get("games", [])
                 if not isinstance(games, list):
-                    print(f"Unexpected API response shape (games not a list)")
+                    print("Unexpected API response: games not a list")
                     return None
                 return games
         except urllib.error.HTTPError as e:
@@ -139,8 +159,8 @@ def fetch_games() -> list[dict] | None:
             return None
     return None
 
+
 def main():
-    # ── Validate env ──
     missing = [k for k, v in [("SUPABASE_URL", SUPABASE_URL),
                                ("SUPABASE_SERVICE_ROLE_KEY", SUPABASE_KEY),
                                ("WC2026_API_KEY", WC2026_API_KEY)] if not v]
@@ -164,15 +184,17 @@ def main():
         log_entry("error", "API unavailable after retries", False)
         update_config("error_api_unavailable")
         die("API unavailable. Aborting.")
-
     print(f"  Got {len(games)} games from API")
 
     # ── 3. Get locked matches past deadline ──
-    cutoff_ts = (time.time() * 1000) - SCORE_AFTER_MS
-    cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(cutoff_ts / 1000))
-
-    params = f"select=id,external_id,home_team:home_team_id(code),away_team:away_team_id(code)&eq(status,locked)&not(external_id,is,null)&lt(kickoff_at,{cutoff_iso})"
-    matches = supabase_get(params)
+    cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                               time.gmtime(time.time() - SCORE_AFTER_S))
+    params = {
+        "select": "id,external_id,home_team:home_team_id(code),away_team:away_team_id(code)",
+        "status": "eq.locked",
+        "kickoff_at": "lt." + cutoff_iso,
+    }
+    matches = supabase_get("matches", params)
     if matches is None:
         log_entry("error", "Failed to query matches", False)
         update_config("error_db_query")
@@ -196,12 +218,7 @@ def main():
         if eid is None:
             continue
 
-        # Find matching game from API
-        game = None
-        for g in games:
-            if str(g.get("id", "")) == str(eid):
-                game = g
-                break
+        game = next((g for g in games if str(g.get("id", "")) == str(eid)), None)
 
         if game is None:
             log_entry("error", f"Game ID {eid} not found in API response",
@@ -230,14 +247,10 @@ def main():
                       False, m["id"], eid)
             errors += 1
         else:
-            hc = ""
-            ht = m.get("home_team")
-            if isinstance(ht, dict):
-                hc = ht.get("code", "?")
-            ac = ""
-            at = m.get("away_team")
-            if isinstance(at, dict):
-                ac = at.get("code", "?")
+            ht = m.get("home_team") or {}
+            at = m.get("away_team") or {}
+            hc = ht.get("code", "?") if isinstance(ht, dict) else "?"
+            ac = at.get("code", "?") if isinstance(at, dict) else "?"
             log_entry("auto_score", f"{hc} {home_score}-{away_score} {ac}",
                       True, m["id"], eid)
             scored += 1
@@ -247,6 +260,7 @@ def main():
     update_config(summary)
     log_entry("info", summary, True)
     print(f"Done: {summary}")
+
 
 if __name__ == "__main__":
     main()
