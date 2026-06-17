@@ -15,8 +15,6 @@ env:
 jobs:
   auto-score:
     runs-on: ubuntu-latest
-    # Skip if secrets aren't configured yet
-    if: env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != '' && env.WC2026_API_KEY != ''
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
