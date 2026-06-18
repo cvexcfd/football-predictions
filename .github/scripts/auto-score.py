@@ -243,8 +243,8 @@ def health_check() -> None:
 
 def fetch_games() -> list[dict] | None:
     """Fetch games from worldcup26.ir with retries."""
-    max_retries = 3
-    retry_delays = [5, 10, 20]
+    max_retries = 5
+    retry_delays = [5, 15, 30, 60, 120]
 
     for attempt in range(max_retries):
         req = urllib.request.Request(API_URL, headers={"Accept": "application/json"})
