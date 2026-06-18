@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Auto-score: fetch worldcup26.ir API, score finished matches via Supabase RPC.
 
-Called by GitHub Actions cron (every 30 min) or manually via workflow_dispatch.
+Called by GitHub Actions cron (every 10 min), repository_dispatch, push, or
+manually via workflow_dispatch.
+
+Includes overdue-match recovery and a health-check mode (HEALTH_MODE=1).
 Requires env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WC2026_API_KEY
 """
 
@@ -124,6 +127,120 @@ def update_config(result: str) -> None:
         print("  WARN: config update failed")
 
 
+def log_with_context(action: str, details: str, success: bool,
+                     match_id: str | None = None,
+                     external_id: int | None = None) -> None:
+    """Log entry with workflow context (run ID, event name)."""
+    enriched = {
+        "workflow_run_id": os.environ.get("GITHUB_RUN_ID", "manual"),
+        "event_name": os.environ.get("GITHUB_EVENT_NAME", "unknown"),
+    }
+    entry = log_entry(action, details, success, match_id, external_id)
+    return entry
+
+
+def check_for_overdue_matches() -> None:
+    """Recover finished matches that were never scored (e.g. due to cron failure).
+
+    Queries Supabase for matches with status='finished' and home_score IS NULL
+    past the scoring deadline, then fetches worldcup26.ir and scores them.
+    """
+    cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                               time.gmtime(time.time() - SCORE_AFTER_S))
+    params = {
+        "select": "id,external_id,home_team:home_team_id(code),away_team:away_team_id(code)",
+        "status": "eq.finished",
+        "home_score": "is.null",
+        "kickoff_at": "lt." + cutoff_iso,
+    }
+    overdue = supabase_get("matches", params)
+    if overdue is None:
+        log_entry("error", "Overdue query failed", False)
+        return
+    if not overdue or len(overdue) == 0:
+        print("  No overdue matches to recover")
+        return
+
+    print(f"  Found {len(overdue)} overdue matches — attempting recovery")
+    games = fetch_games()
+    if games is None:
+        log_entry("error", "Cannot fetch API for overdue recovery", False)
+        return
+
+    recovered = 0
+    for m in overdue:
+        eid = m.get("external_id")
+        if eid is None:
+            continue
+        game = next((g for g in games if str(g.get("id", "")) == str(eid)), None)
+        if game is None:
+            log_entry("error", f"Overdue game {eid} not in API response",
+                      False, m["id"], eid)
+            continue
+        finished = str(game.get("finished", "")).upper() == "TRUE"
+        if not finished:
+            print(f"  Overdue game {eid} still not finished, skipping")
+            continue
+        home_score = int(game.get("home_score", 0))
+        away_score = int(game.get("away_score", 0))
+        res = supabase_rpc("calculate_match_points", {
+            "p_match_id": m["id"],
+            "p_home_score": home_score,
+            "p_away_score": away_score,
+        })
+        if res is None:
+            log_entry("error", f"Overdue recovery RPC failed for game {eid}",
+                      False, m["id"], eid)
+        else:
+            ht = m.get("home_team") or {}
+            at = m.get("away_team") or {}
+            hc = ht.get("code", "?") if isinstance(ht, dict) else "?"
+            ac = at.get("code", "?") if isinstance(at, dict) else "?"
+            log_entry("auto_score", f"{hc} {home_score}-{away_score} {ac}",
+                      True, m["id"], eid)
+            recovered += 1
+
+    if recovered > 0:
+        log_entry("info", f"overdue_recovered={recovered}", True)
+
+
+def health_check() -> None:
+    """Print health check JSON to stdout (used when HEALTH_MODE=1)."""
+    cutoff_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                               time.gmtime(time.time() - SCORE_AFTER_S))
+    status = {
+        "status": "ok",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "workflow_run_id": os.environ.get("GITHUB_RUN_ID", "manual"),
+        "event_name": os.environ.get("GITHUB_EVENT_NAME", "unknown"),
+        "env_vars_ok": bool(SUPABASE_URL and SUPABASE_KEY and WC2026_API_KEY),
+    }
+
+    # Check database via lightweight query
+    try:
+        test = supabase_get("auto_score_config")
+        status["db_reachable"] = test is not None
+    except Exception:
+        status["db_reachable"] = False
+
+    # Count overdue matches
+    try:
+        params = {
+            "status": "eq.finished",
+            "home_score": "is.null",
+            "kickoff_at": "lt." + cutoff_iso,
+        }
+        overdue = supabase_get("matches", params)
+        status["overdue_count"] = len(overdue) if overdue else 0
+    except Exception:
+        status["overdue_count"] = -1
+
+    if not status["env_vars_ok"] or not status["db_reachable"]:
+        status["status"] = "degraded"
+
+    print(json.dumps(status, indent=2))
+
+
 def fetch_games() -> list[dict] | None:
     """Fetch games from worldcup26.ir with retries."""
     max_retries = 3
@@ -202,8 +319,10 @@ def main():
 
     if not matches or len(matches) == 0:
         log_entry("check", "No locked matches past deadline", True)
+        print("No locked matches past deadline")
+        # Recovery: if cron missed windows, some matches may be finished but unscored
+        check_for_overdue_matches()
         update_config("ok_no_matches")
-        print("No matches to score")
         return
 
     print(f"  Found {len(matches)} locked matches past deadline")
@@ -255,7 +374,10 @@ def main():
                       True, m["id"], eid)
             scored += 1
 
-    # ── 5. Update config ──
+    # ── 5. Recovery sweep – score any overdue matches missed by cron ──
+    check_for_overdue_matches()
+
+    # ── 6. Update config ──
     summary = f"scored={scored} checked={checked} errors={errors}"
     update_config(summary)
     log_entry("info", summary, True)
@@ -263,4 +385,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if os.environ.get("HEALTH_MODE") == "1":
+        health_check()
+    else:
+        main()
