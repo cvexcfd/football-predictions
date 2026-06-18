@@ -5,7 +5,19 @@ on:
     # Every 10 minutes — GH Actions cron has delays, shorter interval catches windows reliably
     - cron: '*/10 * * * *'
   workflow_dispatch:
-    # Manual trigger from GitHub Actions UI
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: true
+        default: 'Manual scoring'
+  repository_dispatch:
+    types: [auto_score_trigger]
+  push:
+    branches: [main]
+    paths:
+      - '**.json'
+      - '**.yaml'
+      - '**.yml'
 
 env:
   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
