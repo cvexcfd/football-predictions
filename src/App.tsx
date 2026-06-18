@@ -25,7 +25,6 @@ import AdminHealthPage from './admin/HealthPage'
 import AdminImportPage from './admin/ImportPage'
 import AdminBracketPage from './admin/BracketPage'
 import AdminMonitoringPage from './admin/MonitoringPage'
-import AdminAutoScorePage from './admin/AutoScorePage'
 
 const queryClient = new QueryClient()
 
@@ -74,7 +73,6 @@ export default function App() {
             <Route path="/admin/audit" element={<AdminRoute><AdminLayout><AdminAuditPage /></AdminLayout></AdminRoute>} />
             <Route path="/admin/bracket" element={<AdminRoute><AdminLayout><AdminBracketPage /></AdminLayout></AdminRoute>} />
             <Route path="/admin/monitoring" element={<AdminRoute><AdminLayout><AdminMonitoringPage /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/auto-score" element={<AdminRoute><AdminLayout><AdminAutoScorePage /></AdminLayout></AdminRoute>} />
             <Route path="/admin/health" element={<AdminRoute><AdminLayout><AdminHealthPage /></AdminLayout></AdminRoute>} />
           </Routes>
         </BrowserRouter>

@@ -1,24 +1,4 @@
 {
-  "functions": {
-    "api/*.ts": {
-      "runtime": "vercel-js@3.0.0",
-      "maxDuration": 30
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/lock-matches",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/refresh-cache",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/auto-score",
-      "schedule": "*/30 * * * *"
-    }
-  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
