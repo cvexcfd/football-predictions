@@ -4,7 +4,7 @@
 Environment variables (set as GH Actions secrets):
   SUPABASE_URL       - Supabase project URL
   SUPABASE_SERVICE_ROLE_KEY - Service role key (full access)
-  WC2026_API_KEY     - worldcup26.ir API key
+
 """
 
 import os
@@ -17,7 +17,6 @@ import urllib.error
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-API_KEY = os.environ.get("WC2026_API_KEY", "")
 DEADLINE_HOURS = int(os.environ.get("DEADLINE_HOURS", "2"))
 
 SSL_CTX = ssl.create_default_context()
@@ -31,8 +30,6 @@ if not SUPABASE_URL:
     MISSING.append("SUPABASE_URL")
 if not SUPABASE_KEY:
     MISSING.append("SUPABASE_SERVICE_ROLE_KEY")
-if not API_KEY:
-    MISSING.append("WC2026_API_KEY")
 if MISSING:
     print(f"FATAL: Missing env vars: {', '.join(MISSING)}")
     sys.exit(1)
@@ -98,32 +95,25 @@ def sb_patch(table: str, data: dict, where: str):
 
 def fetch_games() -> list[dict]:
     """Fetch all games from worldcup26.ir."""
-    url = f"https://worldcup26.ir/api/games?apikey={API_KEY}"
+    url = "https://worldcup26.ir/get/games"
     for attempt in range(5):
         try:
             req = urllib.request.Request(url)
             with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
                 data = json.loads(resp.read().decode())
-            games = data if isinstance(data, list) else data.get("games", data.get("data", []))
-            if not isinstance(games, list):
-                print(f"  Unexpected API response shape: {type(games).__name__}")
+            if not isinstance(data, list):
+                print(f"  Unexpected API response: {type(data).__name__}")
                 return []
-            print(f"  Got {len(games)} games from API")
-            return games
+            print(f"  Got {len(data)} games from API")
+            return data
         except urllib.error.HTTPError as e:
             print(f"  API attempt {attempt+1}/5: HTTP {e.code}")
-            if e.code == 429:
+            if e.code in (429, 502, 503, 504):
                 wait = min(2 ** attempt * 10, 120)
-                print(f"  Rate limited, waiting {wait}s...")
+                print(f"  Retrying in {wait}s...")
                 time.sleep(wait)
                 continue
-            elif e.code >= 500:
-                wait = min(2 ** attempt * 10, 60)
-                print(f"  Server error, retrying in {wait}s...")
-                time.sleep(wait)
-                continue
-            else:
-                return []
+            return []
         except Exception as e:
             print(f"  API attempt {attempt+1}/5 failed: {e}")
             if attempt < 4:
@@ -211,8 +201,8 @@ def main():
             checked += 1
             continue
 
-        home_score = game.get("home_score") or game.get("home_goals")
-        away_score = game.get("away_score") or game.get("away_goals")
+        home_score = game.get("home_score")
+        away_score = game.get("away_score")
 
         if home_score is not None and away_score is not None:
             # Score available — update match
