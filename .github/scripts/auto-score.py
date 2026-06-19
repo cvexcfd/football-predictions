@@ -232,12 +232,10 @@ def main():
     print("Checking finished matches for missing point calculations...")
     finished = sb_get(
         "matches?select=id,external_id,home_score,away_score"
-        "&status=eq.finished&order=updated_at.desc&limit=50"
+        "&status=eq.finished&order=created_at.desc&limit=50"
     )
-    print(f"  Query returned: {repr(finished)[:200] if finished else 'None or empty'}")
     if finished:
         f_list = finished if isinstance(finished, list) else [finished]
-        print(f"  Processing {len(f_list)} finished matches...")
         recovered = 0
         for m in f_list:
             check = sb_get(
