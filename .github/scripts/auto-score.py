@@ -214,6 +214,11 @@ def main():
             )
             if ok:
                 scored += 1
+                sb_rpc("calculate_match_points", {
+                    "p_match_id": m["id"],
+                    "p_home_score": int(home_score),
+                    "p_away_score": int(away_score),
+                })
                 log_entry(m["id"], eid, "auto_score", f"Scored {home_score}-{away_score}", True)
                 print(f"  Match #{eid}: scored {home_score}-{away_score}")
             else:
