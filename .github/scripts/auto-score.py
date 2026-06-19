@@ -228,7 +228,42 @@ def main():
             checked += 1
             log_entry(m["id"], eid, "checked", "Match finished but no API score yet", True)
 
-    # 4. Update config
+    # 4. Recovery: Calculate points for already-finished matches that lack them
+    #    (matches scored by older buggy versions that never called calculate_match_points)
+    print("Checking finished matches for missing point calculations...")
+    finished = sb_get(
+        "matches?select=id,external_id,home_score,away_score"
+        "&status=eq.finished&home_score=not.is.null&away_score=not.is.null"
+        "&order=updated_at.desc&limit=50"
+    )
+    if finished:
+        f_list = finished if isinstance(finished, list) else [finished]
+        recovered = 0
+        for m in f_list:
+            check = sb_get(
+                f"predictions?select=id&match_id=eq.{m['id']}&pts_total=gt.0&limit=1"
+            )
+            has_points = bool(check and (isinstance(check, list) and len(check) > 0))
+            if not has_points:
+                hs = m.get("home_score")
+                aws = m.get("away_score")
+                if hs is not None and aws is not None:
+                    pts = sb_rpc("calculate_match_points", {
+                        "p_match_id": m["id"],
+                        "p_home_score": int(hs),
+                        "p_away_score": int(aws),
+                    })
+                    recovered += 1
+                    if m.get("external_id"):
+                        print(f"  Recovery #{m['external_id']}: calculated points ({hs}-{aws})")
+                    else:
+                        print(f"  Recovery {m['id'][:8]}: calculated points ({hs}-{aws})")
+        if recovered:
+            print(f"  Recovered {recovered} matches with missing points")
+    else:
+        print("  No finished matches found for recovery")
+
+    # 5. Update config
     result_str = f"scored={scored} checked={checked} errors={errors}"
     sb_patch("auto_score_config", {"enabled": False, "last_run_at": NOW, "last_run_result": result_str}, "id=eq.true")
     print(f"Done: {result_str}")
