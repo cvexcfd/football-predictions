@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Auto-score: fetch worldcup26.ir scores and update Supabase matches.
+
+Environment variables (set as GH Actions secrets):
+  SUPABASE_URL       - Supabase project URL
+  SUPABASE_SERVICE_ROLE_KEY - Service role key (full access)
+  WC2026_API_KEY     - worldcup26.ir API key
+"""
+
+import os
+import sys
+import time
+import json
+import urllib.request
+import urllib.error
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+API_KEY = os.environ.get("WC2026_API_KEY", "")
+DEADLINE_HOURS = int(os.environ.get("DEADLINE_HOURS", "2"))
+
+NOW = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+MISSING = []
+if not SUPABASE_URL:
+    MISSING.append("SUPABASE_URL")
+if not SUPABASE_KEY:
+    MISSING.append("SUPABASE_SERVICE_ROLE_KEY")
+if not API_KEY:
+    MISSING.append("WC2026_API_KEY")
+if MISSING:
+    print(f"FATAL: Missing env vars: {', '.join(MISSING)}")
+    sys.exit(1)
+
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
+
+
+def sb_get(path: str) -> dict | list | None:
+    """GET from Supabase REST API."""
+    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    req = urllib.request.Request(url, headers=HEADERS, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        print(f"  Supabase GET {path} failed: HTTP {e.code}")
+        return None
+    except Exception as e:
+        print(f"  Supabase GET {path} failed: {e}")
+        return None
+
+
+def sb_rpc(rpc: str, params: dict | None = None) -> dict | list | int | None:
+    """Call a Supabase RPC function."""
+    url = f"{SUPABASE_URL}/rest/v1/rpc/{rpc}"
+    body = json.dumps(params or {}).encode()
+    req = urllib.request.Request(url, data=body, headers=HEADERS, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            raw = resp.read().decode()
+            if not raw:
+                return None
+            return json.loads(raw)
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        print(f"  RPC {rpc} failed: HTTP {e.code} {body[:200]}")
+        return None
+    except Exception as e:
+        print(f"  RPC {rpc} failed: {e}")
+        return None
+
+
+def sb_patch(table: str, data: dict, where: str):
+    """PATCH a Supabase table row."""
+    url = f"{SUPABASE_URL}/rest/v1/{table}?{where}"
+    body = json.dumps(data).encode()
+    req = urllib.request.Request(url, data=body, headers=HEADERS, method="PATCH")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as _:
+            return True
+    except urllib.error.HTTPError as e:
+        print(f"  PATCH {table} failed: HTTP {e.code}")
+        return False
+    except Exception as e:
+        print(f"  PATCH {table} failed: {e}")
+        return False
+
+
+def fetch_games() -> list[dict]:
+    """Fetch all games from worldcup26.ir."""
+    url = f"https://worldcup26.ir/api/games?apikey={API_KEY}"
+    for attempt in range(5):
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode())
+            games = data if isinstance(data, list) else data.get("games", data.get("data", []))
+            if not isinstance(games, list):
+                print(f"  Unexpected API response shape: {type(games).__name__}")
+                return []
+            print(f"  Got {len(games)} games from API")
+            return games
+        except urllib.error.HTTPError as e:
+            print(f"  API attempt {attempt+1}/5: HTTP {e.code}")
+            if e.code == 429:
+                wait = min(2 ** attempt * 10, 120)
+                print(f"  Rate limited, waiting {wait}s...")
+                time.sleep(wait)
+                continue
+            elif e.code >= 500:
+                wait = min(2 ** attempt * 10, 60)
+                print(f"  Server error, retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            else:
+                return []
+        except Exception as e:
+            print(f"  API attempt {attempt+1}/5 failed: {e}")
+            return []
+    print("  API exhausted retries")
+    return []
+
+
+def log_entry(match_id: str | None, external_id: int | None, action: str, details: str | None, success: bool):
+    """Insert a log entry into auto_score_logs."""
+    record = {
+        "match_id": match_id,
+        "external_id": external_id,
+        "action": action,
+        "details": details,
+        "success": success,
+    }
+    sb_patch_data = json.dumps(record).encode()
+    url = f"{SUPABASE_URL}/rest/v1/auto_score_logs"
+    req = urllib.request.Request(
+        url, data=sb_patch_data,
+        headers={**HEADERS, "Prefer": "return=minimal"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15):
+            pass
+    except Exception:
+        pass  # best-effort logging
+
+
+def main():
+    print(f"=== Auto-score run at {NOW} ===")
+
+    # 1. Lock matches that are close to kickoff
+    print("Locking matches via auto_lock_matches RPC...")
+    lock_result = sb_rpc("auto_lock_matches")
+    print(f"  Lock result: {lock_result}")
+
+    # 2. Fetch games from API
+    print("Fetching games from worldcup26.ir...")
+    games = fetch_games()
+    if not games:
+        print("  No games from API, nothing to score")
+        sb_patch("auto_score_config", {"last_run_at": NOW, "last_run_result": "api_error"}, "id=eq.true")
+        log_entry(None, None, "error", "API returned no data", False)
+        sys.exit(1)
+
+    # Build lookup: external_id -> game
+    game_map: dict[int, dict] = {}
+    for g in games:
+        eid = g.get("external_id") or g.get("id")
+        if eid is not None:
+            game_map[int(eid)] = g
+
+    # 3. Get locked matches past deadline
+    cutoff = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - DEADLINE_HOURS * 3600))
+    matches = sb_get(
+        f"matches?select=id,external_id,kickoff_at,home_score,away_score,status"
+        f"&status=eq.locked&kickoff_at=lt.{cutoff}"
+    )
+    if not matches:
+        print("  No locked matches past deadline")
+        sb_patch("auto_score_config", {"last_run_at": NOW, "last_run_result": "ok_no_matches"}, "id=eq.true")
+        return
+
+    locked = matches if isinstance(matches, list) else [matches]
+    print(f"  Found {len(locked)} locked matches past deadline")
+
+    scored = 0
+    checked = 0
+    errors = 0
+
+    for m in locked:
+        eid = m.get("external_id")
+        if eid is None:
+            continue
+        game = game_map.get(eid)
+        if not game:
+            # Try matching by other fields (home/away team names)
+            checked += 1
+            continue
+
+        home_score = game.get("home_score") or game.get("home_goals")
+        away_score = game.get("away_score") or game.get("away_goals")
+
+        if home_score is not None and away_score is not None:
+            # Score available — update match
+            ok = sb_patch(
+                "matches",
+                {"status": "finished", "home_score": int(home_score), "away_score": int(away_score)},
+                f"id=eq.{m['id']}",
+            )
+            if ok:
+                scored += 1
+                log_entry(m["id"], eid, "auto_score", f"Scored {home_score}-{away_score}", True)
+                print(f"  Match #{eid}: scored {home_score}-{away_score}")
+            else:
+                errors += 1
+                log_entry(m["id"], eid, "error", "Failed to update match score", False)
+        else:
+            checked += 1
+            log_entry(m["id"], eid, "checked", "Match finished but no API score yet", True)
+
+    # 4. Update config
+    result_str = f"scored={scored} checked={checked} errors={errors}"
+    sb_patch("auto_score_config", {"enabled": False, "last_run_at": NOW, "last_run_result": result_str}, "id=eq.true")
+    print(f"Done: {result_str}")
+
+    if errors:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

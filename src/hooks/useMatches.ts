@@ -20,18 +20,17 @@ export function useMatches(status: 'upcoming' | 'locked' | 'finished' | 'all' = 
         query = query.eq('status', status)
       }
 
-      const { data: matches, error } = await query
-
-      if (error) throw error
-
       if (playerId) {
-        const { data: predictions } = await supabase
-          .from('predictions')
-          .select('*')
-          .eq('player_id', playerId)
-          .in('match_id', (matches ?? []).map(m => m.id))
+        const [matchResult, predResult] = await Promise.all([
+          query,
+          supabase.from('predictions').select('*').eq('player_id', playerId),
+        ])
 
-        const predMap = new Map(predictions?.map(p => [p.match_id, p]) ?? [])
+        if (matchResult.error) throw matchResult.error
+
+        const matches = matchResult.data ?? []
+        const predictions = predResult.data ?? []
+        const predMap = new Map(predictions.map(p => [p.match_id, p]))
 
         return (matches as MatchWithPrediction[]).map(m => ({
           ...m,
@@ -39,6 +38,8 @@ export function useMatches(status: 'upcoming' | 'locked' | 'finished' | 'all' = 
         }))
       }
 
+      const { data: matches, error } = await query
+      if (error) throw error
       return matches as MatchWithPrediction[]
     },
   })

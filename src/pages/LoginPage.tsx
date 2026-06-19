@@ -35,16 +35,15 @@ export default function LoginPage() {
 
   return (
     <div ref={ref} className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background video */}
+      {/* Background image (static — was 5-10MB video, now ~200KB image) */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay muted loop playsInline
-          poster="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1920&q=80"
-          className="w-full h-full object-cover scale-110"
-          style={{ transform: `translateY(${offsetY}px) scale(1.1)` }}
-        >
-          <source src="https://cdn.coverr.co/videos/coverr-football-stadium-crowd-cheering-4313/1080p.mp4" type="video/mp4" />
-        </video>
+        <div
+          className="w-full h-full bg-cover bg-center scale-110"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1920&q=80)',
+            transform: `translateY(${offsetY}px) scale(1.1)`,
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-surface/95 via-surface/80 to-surface/95" />
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/50" />
         {/* Pitch pattern overlay */}
