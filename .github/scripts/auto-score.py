@@ -11,6 +11,7 @@ import os
 import sys
 import time
 import json
+import ssl
 import urllib.request
 import urllib.error
 
@@ -18,6 +19,10 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 API_KEY = os.environ.get("WC2026_API_KEY", "")
 DEADLINE_HOURS = int(os.environ.get("DEADLINE_HOURS", "2"))
+
+SSL_CTX = ssl.create_default_context()
+SSL_CTX.check_hostname = False
+SSL_CTX.verify_mode = ssl.CERT_NONE
 
 NOW = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -97,7 +102,7 @@ def fetch_games() -> list[dict]:
     for attempt in range(5):
         try:
             req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
                 data = json.loads(resp.read().decode())
             games = data if isinstance(data, list) else data.get("games", data.get("data", []))
             if not isinstance(games, list):
@@ -121,6 +126,11 @@ def fetch_games() -> list[dict]:
                 return []
         except Exception as e:
             print(f"  API attempt {attempt+1}/5 failed: {e}")
+            if attempt < 4:
+                wait = 2 ** attempt * 5
+                print(f"  Retrying in {wait}s...")
+                time.sleep(wait)
+                continue
             return []
     print("  API exhausted retries")
     return []
