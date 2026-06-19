@@ -21,6 +21,25 @@ interface LiveMatch {
   }>
 }
 
+interface RecentResult {
+  id: string
+  kickoff_at: string
+  stage: string | null
+  home_score: number | null
+  away_score: number | null
+  home_team: { name: string; flag_url: string | null; code: string | null } | null
+  away_team: { name: string; flag_url: string | null; code: string | null } | null
+  predictions: Array<{
+    player_id: string
+    pred_home: number
+    pred_away: number
+    pts_total: number
+    player: { name: string } | null
+    badge: { name: string; type: string; factor: number } | null
+    is_absent: boolean
+  }>
+}
+
 export default function LeaderboardPage() {
   const { data: leaderboard, isLoading } = useLeaderboard()
 
@@ -100,7 +119,85 @@ export default function LeaderboardPage() {
     refetchInterval: 60_000,
   })
 
+  const { data: recentResults } = useQuery({
+    queryKey: ['recent-results'],
+    queryFn: async () => {
+      const { data: rawMatches } = await supabase
+        .from('matches')
+        .select(`
+          id, kickoff_at, stage, home_score, away_score,
+          home_team:home_team_id(name, flag_url, code),
+          away_team:away_team_id(name, flag_url, code)
+        `)
+        .eq('status', 'finished')
+        .not('home_score', 'is', null)
+        .order('kickoff_at', { ascending: false })
+        .limit(3)
 
+      if (!rawMatches || rawMatches.length === 0) return []
+
+      const matches = rawMatches.map((m: Record<string, unknown>) => ({
+        id: m.id as string,
+        kickoff_at: m.kickoff_at as string,
+        stage: m.stage as string | null,
+        home_score: m.home_score as number | null,
+        away_score: m.away_score as number | null,
+        home_team: Array.isArray(m.home_team) ? (m.home_team as Array<Record<string, unknown>>)[0] ?? null : m.home_team as Record<string, unknown> | null,
+        away_team: Array.isArray(m.away_team) ? (m.away_team as Array<Record<string, unknown>>)[0] ?? null : m.away_team as Record<string, unknown> | null,
+      }))
+
+      const matchIds = matches.map(m => m.id)
+
+      const { data: rawPreds } = await supabase
+        .from('predictions')
+        .select(`
+          match_id, player_id, pred_home, pred_away, pts_total, badge_id_used, is_absent,
+          player:player_id(name),
+          badge:badge_id_used(name, type, factor)
+        `)
+        .in('match_id', matchIds)
+
+      const predByMatch = new Map<string, Array<{
+        player_id: string
+        pred_home: number
+        pred_away: number
+        pts_total: number
+        player: { name: string } | null
+        badge: { name: string; type: string; factor: number } | null
+        is_absent: boolean
+      }>>()
+      for (const p of rawPreds ?? []) {
+        const pp = p as unknown as {
+          match_id: string
+          player_id: string
+          pred_home: number
+          pred_away: number
+          pts_total: number
+          is_absent: boolean
+          player: Array<{ name: string }> | { name: string } | null
+          badge: Array<{ name: string; type: string; factor: number }> | { name: string; type: string; factor: number } | null
+        }
+        const entry = {
+          player_id: pp.player_id,
+          pred_home: pp.pred_home,
+          pred_away: pp.pred_away,
+          pts_total: pp.pts_total ?? 0,
+          is_absent: pp.is_absent ?? false,
+          player: Array.isArray(pp.player) ? pp.player[0] ?? null : (pp.player as { name: string } | null),
+          badge: Array.isArray(pp.badge) ? pp.badge[0] ?? null : (pp.badge as { name: string; type: string; factor: number } | null),
+        }
+        const arr = predByMatch.get(pp.match_id) ?? []
+        arr.push(entry)
+        predByMatch.set(pp.match_id, arr)
+      }
+
+      return (matches ?? []).map(m => ({
+        ...m,
+        predictions: predByMatch.get(m.id) ?? [],
+      })) as RecentResult[]
+    },
+    refetchInterval: 60_000,
+  })
 
   if (isLoading) return <LoadingSpinner />
 
@@ -177,6 +274,89 @@ export default function LeaderboardPage() {
                             </div>
                           </div>
                         ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recentResults && recentResults.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-3">
+              Recent Results
+            </h2>
+            <div className="space-y-3">
+              {recentResults.map(m => (
+                <div key={m.id} className="glass rounded-2xl overflow-hidden animate-fade-in">
+                  <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-b border-border/50">
+                    <div className="flex items-center gap-2">
+                      {m.stage && <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest bg-surface px-2 py-0.5 rounded-full">{m.stage}</span>}
+                      <span className="text-[10px] text-emerald-400 font-medium">FINISHED</span>
+                    </div>
+                    <span className="text-[11px] text-text-muted">
+                      {new Date(m.kickoff_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+
+                  <div className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {m.home_team?.flag_url && <img src={m.home_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
+                        <span className="font-semibold text-sm text-text truncate">{m.home_team?.name}</span>
+                      </div>
+                      <span className="font-bold text-lg text-primary shrink-0 mx-3">
+                        {m.home_score}-{m.away_score}
+                      </span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-semibold text-sm text-text truncate">{m.away_team?.name}</span>
+                        {m.away_team?.flag_url && <img src={m.away_team.flag_url} alt="" className="w-5 h-3.5 object-contain shrink-0" />}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      {m.predictions.length === 0 ? (
+                        <div className="text-xs text-text-muted text-center py-2">No predictions</div>
+                      ) : (
+                        m.predictions.map(p => {
+                          const exact = p.pred_home === m.home_score && p.pred_away === m.away_score
+                          const result = !exact && (
+                            (m.home_score !== null && m.away_score !== null) && (
+                              (p.pred_home > p.pred_away && m.home_score > m.away_score) ||
+                              (p.pred_home < p.pred_away && m.home_score < m.away_score) ||
+                              (p.pred_home === p.pred_away && m.home_score === m.away_score)
+                            )
+                          )
+                          const ptsClass = exact ? 'text-emerald-400 font-bold' : result ? 'text-amber-400 font-medium' : 'text-text-muted'
+                          return (
+                            <div key={p.player_id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg hover:bg-surface-alt transition-colors">
+                              <span className="font-medium text-text">{p.player?.name ?? '?'}</span>
+                              <div className="flex items-center gap-2">
+                                {p.is_absent ? (
+                                  <span className="text-text-muted italic">Absent</span>
+                                ) : (
+                                  <>
+                                    <span className={ptsClass}>
+                                      {p.pred_home}-{p.pred_away}
+                                    </span>
+                                    {p.pts_total > 0 && (
+                                      <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                                        +{p.pts_total}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                                {p.badge && (
+                                  <span className="text-[10px] text-text-muted bg-surface-alt px-1.5 py-0.5 rounded-full">
+                                    {p.badge.name} ({p.badge.type === 'multiplier' ? '×' : '+'}{p.badge.factor})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })
                       )}
                     </div>
                   </div>
