@@ -101,11 +101,12 @@ def fetch_games() -> list[dict]:
             req = urllib.request.Request(url)
             with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
                 data = json.loads(resp.read().decode())
-            if not isinstance(data, list):
-                print(f"  Unexpected API response: {type(data).__name__}")
+            games = data if isinstance(data, list) else data.get("games", data.get("data", []))
+            if not isinstance(games, list):
+                print(f"  Unexpected API response shape: {type(games).__name__}")
                 return []
-            print(f"  Got {len(data)} games from API")
-            return data
+            print(f"  Got {len(games)} games from API")
+            return games
         except urllib.error.HTTPError as e:
             print(f"  API attempt {attempt+1}/5: HTTP {e.code}")
             if e.code in (429, 502, 503, 504):
