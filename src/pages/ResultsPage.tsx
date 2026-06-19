@@ -4,28 +4,13 @@ import { supabase } from '../lib/supabase'
 import { LoadingSpinner, EmptyState, Badge, SkeletonCard, Button } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../components/Toast'
-import { GroupStandings } from '../components/GroupStandings'
+
 
 export default function ResultsPage() {
   const { player } = useAuth()
   const qc = useQueryClient()
   const { toast } = useToast()
   const isAdmin = player?.is_admin
-
-   const { data: groupStageMatches, isLoading: groupStageMatchesLoading } = useQuery({
-     queryKey: ['finished-group-matches'],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from('matches')
-         .select('*, home_team:home_team_id(*), away_team:away_team_id(*)')
-         .eq('status', 'finished')
-         .eq('stage', 'Group Stage')
-         .order('kickoff_at', { ascending: false })
-
-       if (error) throw error
-       return data as Array<Record<string, unknown>>
-     },
-   })
 
    const { data: allFinishedMatches, isLoading: allFinishedMatchesLoading } = useQuery({
      queryKey: ['all-finished-matches'],
@@ -41,14 +26,7 @@ export default function ResultsPage() {
      },
    })
 
-   const { data: teams, isLoading: teamsLoading } = useQuery({
-     queryKey: ['teams'],
-     queryFn: async () => {
-       const { data, error } = await supabase.from('teams').select('*')
-       if (error) throw error
-       return data as Array<Record<string, unknown>>
-     },
-   })
+
 
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
   const [predictions, setPredictions] = useState<Record<string, unknown[]>>({})
@@ -92,7 +70,7 @@ export default function ResultsPage() {
     }
   }
 
-   const isLoading = groupStageMatchesLoading || allFinishedMatchesLoading || teamsLoading;
+   const isLoading = allFinishedMatchesLoading;
    
    if (isLoading) {
      return (
@@ -134,24 +112,6 @@ export default function ResultsPage() {
        </div>
 
        <div className="px-4 space-y-3">
-         {/* Group Standings Section */}
-         {!teamsLoading && teams && teams.length > 0 && (
-           <>
-             <h2 className="text-lg font-semibold mb-4 text-text">Group Standings</h2>
-             <div className="grid gap-6">
-               {/* Groups A through L */}
-               {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'].map(group => (
-                 <GroupStandings 
-                   key={group} 
-                   group={group} 
-                   teams={teams as any[]} 
-                    matches={groupStageMatches as any[]} 
-                 />
-               ))}
-             </div>
-             <hr className="my-8 border-border/50" />
-           </>
-         )}
          
           {/* Individual Match Results */}
            {allFinishedMatches.map(m => {
