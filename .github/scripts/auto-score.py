@@ -150,6 +150,24 @@ def log_entry(match_id: str | None, external_id: int | None, action: str, detail
         pass  # best-effort logging
 
 
+def ensure_bonus_points():
+    """Re-apply bonus_points to player totals after calculate_match_points resets them."""
+    players = sb_get("players?select=id,bonus_points")
+    if not players:
+        return
+    p_list = players if isinstance(players, list) else [players]
+    for p in p_list:
+        bonus = p.get("bonus_points", 0)
+        if bonus and bonus > 0:
+            pred_sum = sb_get(f"predictions?select=pts_total&player_id=eq.{p['id']}")
+            total = 0
+            if pred_sum:
+                for pr in (pred_sum if isinstance(pred_sum, list) else [pred_sum]):
+                    total += pr.get("pts_total", 0)
+            total += bonus
+            sb_patch("players", {"total_points": total}, f"id=eq.{p['id']}")
+
+
 def main():
     print(f"=== Auto-score run at {NOW} ===")
 
@@ -261,7 +279,10 @@ def main():
     else:
         print("  No finished matches found for recovery")
 
-    # 5. Update config
+    # 5. Re-apply bonus_points so manual adjustments survive recalculations
+    ensure_bonus_points()
+
+    # 6. Update config
     result_str = f"scored={scored} checked={checked} errors={errors}"
     sb_patch("auto_score_config", {"enabled": False, "last_run_at": NOW, "last_run_result": result_str}, "id=eq.true")
     print(f"Done: {result_str}")
