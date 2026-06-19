@@ -180,17 +180,16 @@ def main():
         f"matches?select=id,external_id,kickoff_at,home_score,away_score,status"
         f"&status=eq.locked&kickoff_at=lt.{cutoff}"
     )
-    if not matches:
-        print("  No locked matches past deadline")
-        sb_patch("auto_score_config", {"last_run_at": NOW, "last_run_result": "ok_no_matches"}, "id=eq.true")
-        return
-
-    locked = matches if isinstance(matches, list) else [matches]
-    print(f"  Found {len(locked)} locked matches past deadline")
-
     scored = 0
     checked = 0
     errors = 0
+
+    if matches:
+        locked = matches if isinstance(matches, list) else [matches]
+        print(f"  Found {len(locked)} locked matches past deadline")
+    else:
+        locked = []
+        print("  No locked matches past deadline")
 
     for m in locked:
         eid = m.get("external_id")
