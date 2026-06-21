@@ -203,8 +203,11 @@ def main():
             checked += 1
             continue
 
-        home_score = game.get("home_score")
-        away_score = game.get("away_score")
+        home_score_raw = game.get("home_score")
+        away_score_raw = game.get("away_score")
+
+        home_score = None if home_score_raw is None or str(home_score_raw).lower() == "null" else int(home_score_raw)
+        away_score = None if away_score_raw is None or str(away_score_raw).lower() == "null" else int(away_score_raw)
 
         if home_score is not None and away_score is not None:
             # Score available — update match
