@@ -12,10 +12,10 @@ export default defineConfig({
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Football Predictions WC2026',
-        short_name: 'FP WC2026',
+        short_name: 'WC2026',
         description: 'Predict World Cup 2026 match results',
-        theme_color: '#6366f1',
-        background_color: '#0f0f14',
+        theme_color: '#121212',
+        background_color: '#121212',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
