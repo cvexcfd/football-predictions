@@ -9,6 +9,8 @@
 -- Returns:   JSON { updated: N, skipped: N, message: '...' }
 -- ==============================
 
+DROP FUNCTION IF EXISTS auto_populate_bracket();
+
 CREATE OR REPLACE FUNCTION auto_populate_bracket()
 RETURNS json
 LANGUAGE plpgsql
@@ -93,19 +95,21 @@ BEGIN
       FROM totals
     )
   SELECT
-    group_name,
-    MAX(CASE WHEN pos = 1 THEN team_id END) AS winner_id,
-    MAX(CASE WHEN pos = 1 THEN name END) AS winner_name,
-    MAX(CASE WHEN pos = 2 THEN team_id END) AS runnerup_id,
-    MAX(CASE WHEN pos = 2 THEN name END) AS runnerup_name,
-    MAX(CASE WHEN pos = 3 THEN team_id END) AS third_id,
-    MAX(CASE WHEN pos = 3 THEN name END) AS third_name,
-    MAX(CASE WHEN pos = 3 THEN pts END) AS third_pts,
-    MAX(CASE WHEN pos = 3 THEN gd END) AS third_gd,
-    MAX(CASE WHEN pos = 3 THEN gf END) AS third_gf
-  FROM ranked
-  GROUP BY group_name
-  ORDER BY group_name;
+    g.group_name,
+    w.team_id AS winner_id,
+    w.name AS winner_name,
+    r.team_id AS runnerup_id,
+    r.name AS runnerup_name,
+    t.team_id AS third_id,
+    t.name AS third_name,
+    t.pts AS third_pts,
+    t.gd AS third_gd,
+    t.gf AS third_gf
+  FROM (SELECT DISTINCT group_name FROM ranked) g
+  LEFT JOIN ranked w ON w.group_name = g.group_name AND w.pos = 1
+  LEFT JOIN ranked r ON r.group_name = g.group_name AND r.pos = 2
+  LEFT JOIN ranked t ON t.group_name = g.group_name AND t.pos = 3
+  ORDER BY g.group_name;
 
   -- ============================================================
   -- Step 2: Rank 3rd-placed teams across all groups
