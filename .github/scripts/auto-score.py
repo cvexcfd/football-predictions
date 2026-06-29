@@ -50,15 +50,6 @@ FD_BASE = "https://api.football-data.org/v4"
 FD_HEADERS = {"X-Auth-Token": FOOTBALL_DATA_KEY}
 WC_ID = 2000  # FIFA World Cup competition ID
 
-# Team name aliases: DB seed name -> list of known API name variants
-TEAM_NAME_ALIASES = {
-    "United States": ["USA"],
-    "South Korea": ["Korea Republic"],
-    "Ivory Coast": ["Côte d'Ivoire"],
-    "DR Congo": ["Congo DR"],
-}
-
-
 def sb_get(path: str) -> dict | list | None:
     """GET from Supabase REST API."""
     url = f"{SUPABASE_URL}/rest/v1/{path}"
@@ -173,19 +164,13 @@ def log_entry(match_id: str | None, fd_id: int | None, action: str, details: str
         pass  # best-effort logging
 
 
-def normalize_team(name: str) -> str:
-    """Normalize a team name to match against DB seed names."""
-    n = name.strip()
-    # Check known aliases (reverse lookup)
-    for db_name, api_variants in TEAM_NAME_ALIASES.items():
-        if n.lower() in [v.lower() for v in api_variants]:
-            return db_name
-    return n
+def build_team_code_map() -> dict[str, str]:
+    """Fetch teams from Supabase and return {code_upper: id}.
 
-
-def build_team_name_map() -> dict[str, str]:
-    """Fetch teams from Supabase and return {normalized_name: id}."""
-    teams = sb_get("teams?select=id,name")
+    Uses the 3-letter team code (e.g. 'USA', 'ARG') to match against
+    football-data.org's 'tla' field, which is more reliable than name matching.
+    """
+    teams = sb_get("teams?select=id,name,code")
     if not teams:
         print("  Failed to fetch teams from Supabase")
         return {}
@@ -193,12 +178,10 @@ def build_team_name_map() -> dict[str, str]:
         teams = [teams]
     mapping = {}
     for t in teams:
-        mapping[t["name"]] = t["id"]
-        # Also add alias variants
-        if t["name"] in TEAM_NAME_ALIASES:
-            for alias in TEAM_NAME_ALIASES[t["name"]]:
-                mapping[alias] = t["id"]
-    print(f"  Loaded {len(teams)} teams from DB")
+        code = (t.get("code") or "").strip().upper()
+        if code:
+            mapping[code] = t["id"]
+    print(f"  Loaded {len(teams)} teams from DB ({len(mapping)} with codes)")
     return mapping
 
 
@@ -221,66 +204,66 @@ def fetch_fd_matches() -> list[dict]:
 def extract_score_90min(match: dict) -> tuple[int | None, int | None]:
     """Extract 90-minute score from a football-data.org match.
 
-    Returns (home_score, away_score) from score.regularTime.
-    Falls back to score.fullTime if regularTime is absent (match ended in regular time).
+    Returns (home_score, away_score) from score.regularTime (if match went to ET).
+    Falls back to score.fullTime for matches that ended in regular time.
     """
     score = match.get("score") or {}
+    # regularTime appears only when duration=EXTRA_TIME or PENALTY_SHOOTOUT
     rt = score.get("regularTime") or {}
-    if rt.get("homeTeam") is not None and rt.get("awayTeam") is not None:
-        return int(rt["homeTeam"]), int(rt["awayTeam"])
-    # No regularTime means the match ended in regular time — use fullTime
+    if rt.get("home") is not None and rt.get("away") is not None:
+        return int(rt["home"]), int(rt["away"])
+    # Default: use fullTime (90-min score when match ended in regular time,
+    # or the full score including ET for EXTRA_TIME matches without regularTime)
     ft = score.get("fullTime") or {}
-    if ft.get("homeTeam") is not None and ft.get("awayTeam") is not None:
-        return int(ft["homeTeam"]), int(ft["awayTeam"])
+    if ft.get("home") is not None and ft.get("away") is not None:
+        return int(ft["home"]), int(ft["away"])
     return None, None
 
 
 def match_fd_to_db(
     db_match: dict,
     fd_matches: list[dict],
-    team_names: dict[str, str],
+    team_codes: dict[str, str],
 ) -> dict | None:
     """Find the football-data.org match corresponding to a DB match.
 
-    Matches on (home team, away team) with date proximity check.
+    Matches by 3-letter team code (DB `code` ↔ API `tla`).
+    Skips matches involving teams whose code doesn't exist in the API
+    (these are fictional teams in our simulation that don't match real WC teams).
     """
     db_home_id = db_match.get("home_team_id")
     db_away_id = db_match.get("away_team_id")
-    db_kickoff = db_match.get("kickoff_at", "")
 
-    # Find DB team names from our mapping (reverse lookup)
-    db_home_name = None
-    db_away_name = None
-    for name, tid in team_names.items():
+    # Look up codes by team ID (reverse mapping)
+    db_home_code = None
+    db_away_code = None
+    for code, tid in team_codes.items():
         if tid == db_home_id:
-            db_home_name = name
+            db_home_code = code
         if tid == db_away_id:
-            db_away_name = name
+            db_away_code = code
 
-    if not db_home_name or not db_away_name:
+    # If either team code isn't in the API, the match can't be auto-scored
+    # (fictional team not present in real WC data)
+    if not db_home_code or not db_away_code:
         return None
 
-    # Parse DB kickoff date for comparison
+    db_kickoff = db_match.get("kickoff_at", "")
     try:
         db_date = datetime.fromisoformat(db_kickoff.replace("Z", "+00:00")).date()
     except Exception:
         db_date = None
 
-    home_norm = normalize_team(db_home_name).lower()
-    away_norm = normalize_team(db_away_name).lower()
-
     candidates = []
     for fd_m in fd_matches:
-        fd_home = (fd_m.get("homeTeam") or {}).get("name", "")
-        fd_away = (fd_m.get("awayTeam") or {}).get("name", "")
+        fd_home_tla = ((fd_m.get("homeTeam") or {}).get("tla") or "").upper()
+        fd_away_tla = ((fd_m.get("awayTeam") or {}).get("tla") or "").upper()
 
-        fd_home_norm = normalize_team(fd_home).lower()
-        fd_away_norm = normalize_team(fd_away).lower()
-
-        # Check if teams match (home vs away or reversed)
+        # Match by TLA (home/away order matters for group stage,
+        # but allow reversed for knockout)
         teams_match = (
-            (home_norm == fd_home_norm and away_norm == fd_away_norm)
-            or (home_norm == fd_away_norm and away_norm == fd_home_norm)
+            (db_home_code == fd_home_tla and db_away_code == fd_away_tla)
+            or (db_home_code == fd_away_tla and db_away_code == fd_home_tla)
         )
         if not teams_match:
             continue
@@ -296,17 +279,15 @@ def match_fd_to_db(
         if db_date and fd_date:
             diff = abs((db_date - fd_date).days)
             if diff > 3:
-                continue  # too far apart
+                continue
 
         candidates.append(fd_m)
 
     if len(candidates) == 1:
         return candidates[0]
     if len(candidates) > 1:
-        # Multiple matches between same teams (e.g. home-and-away) —
-        # pick the one closest in date
         if db_date:
-            best = min(
+            return min(
                 candidates,
                 key=lambda m: abs(
                     datetime.fromisoformat(
@@ -317,7 +298,6 @@ def match_fd_to_db(
                 if m.get("utcDate")
                 else 999,
             )
-            return best
         return candidates[0]
     return None
 
@@ -339,10 +319,11 @@ def main():
         log_entry(None, None, "error", "API returned no data", False)
         sys.exit(1)
 
-    # 3. Load team name -> ID mapping from DB
-    print("Loading team name mappings...")
-    team_names = build_team_name_map()
-    if not team_names:
+    # 3. Load team code -> ID mapping from DB
+    #     Matched against football-data.org 'tla' (3-letter FIFA code)
+    print("Loading team code mappings...")
+    team_codes = build_team_code_map()
+    if not team_codes:
         print("  Failed to load teams — aborting")
         sys.exit(1)
 
@@ -365,7 +346,7 @@ def main():
 
     # 5. Match and score each locked match
     for m in locked:
-        fd_match = match_fd_to_db(m, fd_matches, team_names)
+        fd_match = match_fd_to_db(m, fd_matches, team_codes)
         if not fd_match:
             checked += 1
             continue
