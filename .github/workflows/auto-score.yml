@@ -1,6 +1,9 @@
 name: Auto-Score Matches
 
 on:
+  schedule:
+    # Every 30 minutes — matches finish, check 2h30min later
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       reason:
@@ -14,6 +17,7 @@ env:
   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+  DEADLINE_HOURS: '2.5'
 
 
 jobs:

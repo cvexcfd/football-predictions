@@ -22,7 +22,7 @@ from datetime import datetime, timezone, timedelta
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 FOOTBALL_DATA_KEY = os.environ.get("FOOTBALL_DATA_API_KEY", "")
-DEADLINE_HOURS = int(os.environ.get("DEADLINE_HOURS", "2"))
+DEADLINE_HOURS = float(os.environ.get("DEADLINE_HOURS", "2.5"))
 
 NOW_UTC = datetime.now(timezone.utc)
 NOW_STR = NOW_UTC.strftime("%Y-%m-%dT%H:%M:%SZ")
